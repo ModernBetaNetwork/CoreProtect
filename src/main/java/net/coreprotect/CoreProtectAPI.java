@@ -575,7 +575,7 @@ public class CoreProtectAPI extends Queue {
 
     public boolean isInspecting(String user)
     {
-        return  ConfigHandler.inspecting.get(user);
+        return  ConfigHandler.inspecting.getOrDefault(user, false);
     }
 
 }
