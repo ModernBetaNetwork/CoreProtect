@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.coreprotect.config.ConfigHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -570,6 +571,11 @@ public class CoreProtectAPI extends Queue {
 
     public void testAPI() {
         Chat.console(Phrase.build(Phrase.API_TEST));
+    }
+
+    public boolean isInspecting(String user)
+    {
+        return  ConfigHandler.inspecting.get(user);
     }
 
 }
