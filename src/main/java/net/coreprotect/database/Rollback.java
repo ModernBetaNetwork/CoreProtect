@@ -836,15 +836,6 @@ public class Rollback extends Queue {
                                                 if (countBlock) {
                                                     blockCount1++;
                                                 }
-                                                if (meta != null) {
-                                                    Inventory inventory = Util.getContainerInventory(block.getState(), false);
-                                                    for (Object value : meta) {
-                                                        ItemStack item = Util.unserializeItemStackLegacy(value);
-                                                        if (item != null) {
-                                                            modifyContainerItems(rowType, inventory, 0, item, 1);
-                                                        }
-                                                    }
-                                                }
                                             }
                                             else if (rowType == Material.COMMAND_BLOCK || rowType == Material.REPEATING_COMMAND_BLOCK || rowType == Material.CHAIN_COMMAND_BLOCK) { // command block
                                                 Util.prepareTypeAndData(chunkChanges, block, rowType, blockData, false);
