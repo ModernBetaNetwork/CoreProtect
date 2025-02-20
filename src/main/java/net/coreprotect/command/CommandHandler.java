@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +24,7 @@ import org.bukkit.entity.Player;
 import net.coreprotect.bukkit.BukkitAdapter;
 import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
+import net.coreprotect.extensions.Extensions;
 import net.coreprotect.language.Phrase;
 import net.coreprotect.language.Selector;
 import net.coreprotect.model.BlockGroup;
@@ -34,7 +36,6 @@ import net.coreprotect.utility.Util;
 public class CommandHandler implements CommandExecutor {
     private static CommandHandler instance;
     private static ConcurrentHashMap<String, Boolean> versionAlert = new ConcurrentHashMap<>();
-    protected static Set<Material> naturalBlocks = BlockGroup.NATURAL_BLOCKS;
 
     public static CommandHandler getInstance() {
         if (instance == null) {
@@ -277,12 +278,7 @@ public class CommandHandler implements CommandExecutor {
                     if (argument.contains(",")) {
                         String[] i2 = argument.split(",");
                         for (String i3 : i2) {
-                            if (i3.equals("#natural")) {
-                                for (Material block : naturalBlocks) {
-                                    excluded.put(block, false);
-                                }
-                            }
-                            else {
+                            if (!checkTags(i3, excluded)) {
                                 Material i3_material = Util.getType(i3);
                                 if (i3_material != null && (i3_material.isBlock() || argAction.contains(4))) {
                                     excluded.put(i3_material, false);
@@ -306,12 +302,7 @@ public class CommandHandler implements CommandExecutor {
                         }
                     }
                     else {
-                        if (argument.equals("#natural")) {
-                            for (Material block : naturalBlocks) {
-                                excluded.put(block, false);
-                            }
-                        }
-                        else {
+                        if (!checkTags(argument, excluded)) {
                             Material iMaterial = Util.getType(argument);
                             if (iMaterial != null && (iMaterial.isBlock() || argAction.contains(4))) {
                                 excluded.put(iMaterial, false);
@@ -359,7 +350,7 @@ public class CommandHandler implements CommandExecutor {
                         String[] i2 = argument.split(",");
                         for (String i3 : i2) {
                             boolean isBlock = false;
-                            if (i3.equals("#natural")) {
+                            if (checkTags(i3)) {
                                 isBlock = true;
                             }
                             else {
@@ -387,7 +378,7 @@ public class CommandHandler implements CommandExecutor {
                     }
                     else {
                         boolean isBlock = false;
-                        if (argument.equals("#natural")) {
+                        if (checkTags(argument)) {
                             isBlock = true;
                         }
                         else {
@@ -630,10 +621,7 @@ public class CommandHandler implements CommandExecutor {
                     if (argument.contains(",")) {
                         String[] i2 = argument.split(",");
                         for (String i3 : i2) {
-                            if (i3.equals("#natural")) {
-                                restricted.addAll(naturalBlocks);
-                            }
-                            else {
+                            if (!checkTags(argument, restricted)) {
                                 Material i3_material = Util.getType(i3);
                                 if (i3_material != null && (i3_material.isBlock() || argAction.contains(4))) {
                                     restricted.add(i3_material);
@@ -662,10 +650,7 @@ public class CommandHandler implements CommandExecutor {
                         }
                     }
                     else {
-                        if (argument.equals("#natural")) {
-                            restricted.addAll(naturalBlocks);
-                        }
-                        else {
+                        if (!checkTags(argument, restricted)) {
                             Material material = Util.getType(argument);
                             if (material != null && (material.isBlock() || argAction.contains(4))) {
                                 restricted.add(material);
@@ -1137,6 +1122,52 @@ public class CommandHandler implements CommandExecutor {
         return worldName;
     }
 
+    protected static Map<String, Set<Material>> getTags() {
+        Map<String, Set<Material>> tagMap = new HashMap<>();
+        tagMap.put("#button", BlockGroup.BUTTONS);
+        tagMap.put("#container", BlockGroup.CONTAINERS);
+        tagMap.put("#door", BlockGroup.DOORS);
+        tagMap.put("#natural", BlockGroup.NATURAL_BLOCKS);
+        tagMap.put("#pressure_plate", BlockGroup.PRESSURE_PLATES);
+        tagMap.put("#shulker_box", BlockGroup.SHULKER_BOXES);
+        return tagMap;
+    }
+
+    protected static boolean checkTags(String argument) {
+        return getTags().containsKey(argument);
+    }
+
+    protected static boolean checkTags(String argument, Map<Object, Boolean> list) {
+        for (Entry<String, Set<Material>> entry : getTags().entrySet()) {
+            String tag = entry.getKey();
+            Set<Material> materials = entry.getValue();
+
+            if (argument.equals(tag)) {
+                for (Material block : materials) {
+                    list.put(block, false);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static boolean checkTags(String argument, List<Object> list) {
+        for (Entry<String, Set<Material>> entry : getTags().entrySet()) {
+            String tag = entry.getKey();
+            Set<Material> materials = entry.getValue();
+
+            if (argument.equals(tag)) {
+                list.addAll(materials);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void validUserCheck(List<String> users, String user) {
         List<String> badUsers = Arrays.asList("n", "noisy", "v", "verbose", "#v", "#verbose", "#silent", "#preview", "#preview_cancel", "#count", "#sum");
         String check = user.replaceAll("[\\s'\"]", "");
@@ -1243,6 +1274,14 @@ public class CommandHandler implements CommandExecutor {
                 else if (corecommand.equals("network-debug")) {
                     NetworkDebugCommand.runCommand(user, permission, argumentArray);
                 }
+                else if (corecommand.equals("migrate-db")) {
+                    if (!Util.validDonationKey()) {
+                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.DONATION_KEY_REQUIRED));
+                    }
+                    else {
+                        Extensions.runDatabaseMigration(corecommand, user, argumentArray);
+                    }
+                }
                 else {
                     Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.COMMAND_NOT_FOUND, Color.WHITE, "/co " + corecommand));
                 }
@@ -1253,16 +1292,23 @@ public class CommandHandler implements CommandExecutor {
 
             if (user.isOp() && versionAlert.get(user.getName()) == null) {
                 String latestVersion = NetworkHandler.latestVersion();
-                if (latestVersion != null) {
+                String latestEdgeVersion = NetworkHandler.latestEdgeVersion();
+                if (latestVersion != null || latestEdgeVersion != null) {
                     versionAlert.put(user.getName(), true);
                     class updateAlert implements Runnable {
                         @Override
                         public void run() {
                             try {
                                 Thread.sleep(5000);
-                                Chat.sendMessage(user, Color.WHITE + "----- " + Color.DARK_AQUA + Phrase.build(Phrase.UPDATE_HEADER, "CoreProtect") + Color.WHITE + " -----");
-                                Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.UPDATE_NOTICE, Color.WHITE, "CoreProtect v" + latestVersion));
-                                Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.LINK_DOWNLOAD, Color.WHITE, "www.coreprotect.net/download/"));
+                                Chat.sendMessage(user, Color.WHITE + "----- " + Color.DARK_AQUA + Phrase.build(Phrase.UPDATE_HEADER, "CoreProtect" + (Util.isCommunityEdition() ? " " + ConfigHandler.COMMUNITY_EDITION : "")) + Color.WHITE + " -----");
+                                if (latestVersion != null) {
+                                    Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.UPDATE_NOTICE, Color.WHITE, "CoreProtect CE v" + latestVersion));
+                                    Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.LINK_DOWNLOAD, Color.WHITE, "www.coreprotect.net/download/"));
+                                }
+                                else {
+                                    Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.UPDATE_NOTICE, Color.WHITE, "CoreProtect v" + latestEdgeVersion));
+                                    Chat.sendMessage(user, Color.DARK_AQUA + Phrase.build(Phrase.LINK_DOWNLOAD, Color.WHITE, "www.coreprotect.net/latest/"));
+                                }
                             }
                             catch (Exception e) {
                                 e.printStackTrace();
