@@ -43,11 +43,11 @@ public class Database extends Queue {
     public static final int BLOCKDATA = 12;
     public static final int ITEM = 13;
 
-    public static void beginTransaction(Statement statement) {
+    public static void beginTransaction(Statement statement, boolean isMySQL) {
         Consumer.transacting = true;
 
         try {
-            if (Config.getGlobal().MYSQL) {
+            if (isMySQL) {
                 statement.executeUpdate("START TRANSACTION");
             }
             else {
@@ -59,12 +59,12 @@ public class Database extends Queue {
         }
     }
 
-    public static void commitTransaction(Statement statement) throws Exception {
+    public static void commitTransaction(Statement statement, boolean isMySQL) throws Exception {
         int count = 0;
 
         while (true) {
             try {
-                if (Config.getGlobal().MYSQL) {
+                if (isMySQL) {
                     statement.executeUpdate("COMMIT");
                 }
                 else {
@@ -89,8 +89,8 @@ public class Database extends Queue {
         }
     }
 
-    public static void performCheckpoint(Statement statement) throws SQLException {
-        if (!Config.getGlobal().MYSQL) {
+    public static void performCheckpoint(Statement statement, boolean isMySQL) throws SQLException {
+        if (!isMySQL) {
             statement.executeUpdate("PRAGMA wal_checkpoint(TRUNCATE)");
         }
     }
@@ -221,7 +221,7 @@ public class Database extends Queue {
         try {
             String signInsert = "INSERT INTO " + ConfigHandler.prefix + "sign (time, user, wid, x, y, z, action, color, color_secondary, data, waxed, face, line_1, line_2, line_3, line_4, line_5, line_6, line_7, line_8) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             String blockInsert = "INSERT INTO " + ConfigHandler.prefix + "block (time, user, wid, x, y, z, type, data, meta, blockdata, action, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            String skullInsert = "INSERT INTO " + ConfigHandler.prefix + "skull (time, owner) VALUES (?, ?)";
+            String skullInsert = "INSERT INTO " + ConfigHandler.prefix + "skull (time, owner, skin) VALUES (?, ?, ?)";
             String containerInsert = "INSERT INTO " + ConfigHandler.prefix + "container (time, user, wid, x, y, z, type, data, amount, metadata, action, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             String itemInsert = "INSERT INTO " + ConfigHandler.prefix + "item (time, user, wid, x, y, z, type, data, amount, action, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             String worldInsert = "INSERT INTO " + ConfigHandler.prefix + "world (id, world) VALUES (?, ?)";
@@ -338,13 +338,13 @@ public class Database extends Queue {
         }
     }
 
-    public static void createDatabaseTables(String prefix, boolean purge) {
+    public static void createDatabaseTables(String prefix, Connection forceConnection, boolean mySQL, boolean purge) {
         ConfigHandler.databaseTables.clear();
         ConfigHandler.databaseTables.addAll(Arrays.asList("art_map", "block", "chat", "command", "container", "item", "database_lock", "entity", "entity_map", "material_map", "blockdata_map", "session", "sign", "skull", "user", "username_log", "version", "world"));
 
-        if (Config.getGlobal().MYSQL) {
+        if (mySQL) {
             boolean success = false;
-            try (Connection connection = Database.getConnection(true, true, true, 0)) {
+            try (Connection connection = (forceConnection != null ? forceConnection : Database.getConnection(true, true, true, 0))) {
                 if (connection != null) {
                     String index = "";
                     Statement statement = connection.createStatement();
@@ -372,7 +372,7 @@ public class Database extends Queue {
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "session(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),time int, user int, wid int, x int, y int (3), z int, action tinyint" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
                     index = ", INDEX(wid,x,z,time), INDEX(user,time), INDEX(time)";
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "sign(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),time int, user int, wid int, x int, y int, z int, action tinyint, color int, color_secondary int, data tinyint, waxed tinyint, face tinyint, line_1 varchar(100), line_2 varchar(100), line_3 varchar(100), line_4 varchar(100), line_5 varchar(100), line_6 varchar(100), line_7 varchar(100), line_8 varchar(100)" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
-                    statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "skull(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid), time int, owner varchar(64)) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
+                    statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "skull(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid), time int, owner varchar(255), skin varchar(255)) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
                     index = ", INDEX(user), INDEX(uuid)";
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "user(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),time int,user varchar(100),uuid varchar(64)" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
                     index = ", INDEX(uuid,user)";
@@ -380,7 +380,7 @@ public class Database extends Queue {
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "version(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),time int,version varchar(16)) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
                     index = ", INDEX(id)";
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "world(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),id int,world varchar(255)" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
-                    if (!purge) {
+                    if (!purge && forceConnection == null) {
                         initializeTables(prefix, statement);
                     }
                     statement.close();
@@ -390,18 +390,18 @@ public class Database extends Queue {
             catch (Exception e) {
                 e.printStackTrace();
             }
-            if (!success) {
+            if (!success && forceConnection == null) {
                 Config.getGlobal().MYSQL = false;
             }
         }
-        if (!Config.getGlobal().MYSQL) {
-            try (Connection connection = Database.getConnection(true, 0)) {
+        if (!mySQL) {
+            try (Connection connection = (forceConnection != null ? forceConnection : Database.getConnection(true, 0))) {
                 Statement statement = connection.createStatement();
                 List<String> tableData = new ArrayList<>();
                 List<String> indexData = new ArrayList<>();
                 String attachDatabase = "";
 
-                if (purge) {
+                if (purge && forceConnection == null) {
                     String query = "ATTACH DATABASE '" + ConfigHandler.path + ConfigHandler.sqlite + ".tmp' AS tmp_db";
                     PreparedStatement preparedStmt = connection.prepareStatement(query);
                     preparedStmt.execute();
@@ -462,7 +462,7 @@ public class Database extends Queue {
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "sign (time INTEGER, user INTEGER, wid INTEGER, x INTEGER, y INTEGER, z INTEGER, action INTEGER, color INTEGER, color_secondary INTEGER, data INTEGER, waxed INTEGER, face INTEGER, line_1 TEXT, line_2 TEXT, line_3 TEXT, line_4 TEXT, line_5 TEXT, line_6 TEXT, line_7 TEXT, line_8 TEXT);");
                 }
                 if (!tableData.contains(prefix + "skull")) {
-                    statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "skull (id INTEGER PRIMARY KEY ASC, time INTEGER, owner TEXT);");
+                    statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "skull (id INTEGER PRIMARY KEY ASC, time INTEGER, owner TEXT, skin TEXT);");
                 }
                 if (!tableData.contains(prefix + "user")) {
                     statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "user (id INTEGER PRIMARY KEY ASC, time INTEGER, user TEXT, uuid TEXT);");
@@ -574,7 +574,7 @@ public class Database extends Queue {
                         e.printStackTrace();
                     }
                 }
-                if (!purge) {
+                if (!purge && forceConnection == null) {
                     initializeTables(prefix, statement);
                 }
                 statement.close();

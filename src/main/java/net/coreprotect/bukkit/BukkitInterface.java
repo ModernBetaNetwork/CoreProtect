@@ -43,8 +43,6 @@ public interface BukkitInterface {
 
     public boolean isAttached(Block block, Block scanBlock, BlockData blockData, int scanMin);
 
-    public boolean isWall(BlockData blockData);
-
     public boolean isItemFrame(Material material);
 
     public boolean isGlowing(Sign sign, boolean isFront);
@@ -86,5 +84,11 @@ public interface BukkitInterface {
     public boolean isSignFront(SignChangeEvent event);
 
     public ItemStack getArrowMeta(Arrow arrow, ItemStack itemStack);
+
+    public EntityType getEntityType(Material material);
+
+    public Object getRegistryKey(Object value);
+
+    public Object getRegistryValue(String key, Object tClass);
 
 }
