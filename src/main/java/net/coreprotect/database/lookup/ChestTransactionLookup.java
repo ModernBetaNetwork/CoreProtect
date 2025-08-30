@@ -24,7 +24,7 @@ import net.coreprotect.utility.WorldUtils;
 
 public class ChestTransactionLookup {
 
-    public static List<String> performLookup(String command, Statement statement, Location l, CommandSender commandSender, int page, int limit, boolean exact) {
+    public static List<String> performLookup(String command, Statement statement, Location l, Location l2, CommandSender commandSender, int page, int limit) {
         List<String> result = new ArrayList<>();
 
         try {
@@ -51,9 +51,9 @@ public class ChestTransactionLookup {
             int x = (int) Math.floor(l.getX());
             int y = (int) Math.floor(l.getY());
             int z = (int) Math.floor(l.getZ());
-            int x2 = (int) Math.ceil(l.getX());
-            int y2 = (int) Math.ceil(l.getY());
-            int z2 = (int) Math.ceil(l.getZ());
+            int x2 = (int) Math.floor(l2.getX());
+            int y2 = (int) Math.floor(l2.getY());
+            int z2 = (int) Math.floor(l2.getZ());
             long time = (System.currentTimeMillis() / 1000L);
             int worldId = WorldUtils.getWorldId(l.getWorld().getName());
             int count = 0;
@@ -61,9 +61,6 @@ public class ChestTransactionLookup {
             int pageStart = rowMax - limit;
 
             String query = "SELECT COUNT(*) as count from " + ConfigHandler.prefix + "container " + WorldUtils.getWidIndex("container") + "WHERE wid = '" + worldId + "' AND (x = '" + x + "' OR x = '" + x2 + "') AND (z = '" + z + "' OR z = '" + z2 + "') AND y = '" + y + "' LIMIT 0, 1";
-            if (exact) {
-                query = "SELECT COUNT(*) as count from " + ConfigHandler.prefix + "container " + WorldUtils.getWidIndex("container") + "WHERE wid = '" + worldId + "' AND (x = '" + l.getBlockX() + "') AND (z = '" + l.getBlockZ() + "') AND y = '" + y + "' LIMIT 0, 1";
-            }
             ResultSet results = statement.executeQuery(query);
 
             while (results.next()) {
@@ -74,9 +71,7 @@ public class ChestTransactionLookup {
             int totalPages = (int) Math.ceil(count / (limit + 0.0));
 
             query = "SELECT time,user,action,type,data,amount,metadata,rolled_back FROM " + ConfigHandler.prefix + "container " + WorldUtils.getWidIndex("container") + "WHERE wid = '" + worldId + "' AND (x = '" + x + "' OR x = '" + x2 + "') AND (z = '" + z + "' OR z = '" + z2 + "') AND y = '" + y + "' ORDER BY rowid DESC LIMIT " + pageStart + ", " + limit + "";
-            if (exact) {
-                query = "SELECT time,user,action,type,data,amount,metadata,rolled_back FROM " + ConfigHandler.prefix + "container " + WorldUtils.getWidIndex("container") + "WHERE wid = '" + worldId + "' AND (x = '" + l.getBlockX() + "') AND (z = '" + l.getBlockZ() + "') AND y = '" + y + "' ORDER BY rowid DESC LIMIT " + pageStart + ", " + limit + "";
-            }
+
             results = statement.executeQuery(query);
             while (results.next()) {
                 int resultUserId = results.getInt("user");

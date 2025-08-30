@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.coreprotect.modernbeta.ModernBetaHook;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -57,6 +58,8 @@ import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.Color;
 import net.coreprotect.utility.ItemUtils;
 import net.coreprotect.utility.WorldUtils;
+import org.modernbeta.plugins.betaify.feature.blocks.chests.BetaFatChestsFeature;
+import org.modernbeta.plugins.betaify.util.BlockUtil;
 
 public final class PlayerInteractListener extends Queue implements Listener {
 
@@ -145,6 +148,7 @@ public final class PlayerInteractListener extends Queue implements Listener {
                     }
                     else if (isContainerBlock && Config.getConfig(world).ITEM_TRANSACTIONS) {
                         Location location = null;
+                        Location location2 = null;
                         if (type.equals(Material.CHEST) || type.equals(Material.TRAPPED_CHEST)) {
                             Chest chest = (Chest) clickedBlock.getState();
                             InventoryHolder inventoryHolder = chest.getInventory().getHolder();
@@ -156,13 +160,25 @@ public final class PlayerInteractListener extends Queue implements Listener {
                             else {
                                 location = chest.getLocation();
                             }
+                        } else if (ModernBetaHook.getInstance() != null) {
+                            CoreProtect.getInstance().getLogger().info("B");
+                            BetaFatChestsFeature fatChests = ModernBetaHook.getInstance().getFatChestsFeature();
+                            if (fatChests.isDoubleChest(clickedBlock.getType())) {
+                                CoreProtect.getInstance().getLogger().info("C");
+                                List<Block> adjacentBlocks = BlockUtil.getAdjacentBlocks(clickedBlock, BlockUtil.HORIZONTAL_FACES,
+                                        b -> fatChests.isDoubleChest(b));
+                                if (adjacentBlocks.size() == 1) {
+                                    CoreProtect.getInstance().getLogger().info("D");
+                                    location2 = adjacentBlocks.get(0).getLocation();
+                                }
+                            }
                         }
 
                         if (location == null) {
                             location = clickedBlock.getLocation();
                         }
 
-                        containerInspector.performContainerLookup(player, location);
+                        containerInspector.performContainerLookup(player, location, location2);
                         event.setCancelled(true);
                     }
                     else if (isInteractBlock) {

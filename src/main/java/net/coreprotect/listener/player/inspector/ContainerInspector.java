@@ -12,7 +12,7 @@ import net.coreprotect.utility.Chat;
 
 public class ContainerInspector extends BaseInspector {
 
-    public void performContainerLookup(final Player player, final Location finalLocation) {
+    public void performContainerLookup(final Player player, final Location finalLocation, final Location finalLocation2) {
         class BasicThread implements Runnable {
             @Override
             public void run() {
@@ -21,7 +21,7 @@ public class ContainerInspector extends BaseInspector {
 
                     try (Connection connection = getDatabaseConnection(player)) {
                         Statement statement = connection.createStatement();
-                        List<String> blockData = ChestTransactionLookup.performLookup(null, statement, finalLocation, player, 1, 7, false);
+                        List<String> blockData = ChestTransactionLookup.performLookup(null, statement, finalLocation, finalLocation2, player, 1, 7);
                         for (String data : blockData) {
                             Chat.sendComponent(player, data);
                         }
