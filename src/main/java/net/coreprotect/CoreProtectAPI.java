@@ -882,11 +882,6 @@ public class CoreProtectAPI extends Queue {
         Chat.console(Phrase.build(Phrase.API_TEST));
     }
 
-    public boolean isInspecting(String user)
-    {
-        return  ConfigHandler.inspecting.getOrDefault(user, false);
-    }
-
     /**
      * Helper method to check if the API is enabled and the player is not null.
      * 
