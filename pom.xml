@@ -303,6 +303,18 @@
       <version>1.16.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.modernbeta.plugins</groupId>
+      <artifactId>ModernBeta-Betaify</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.modernbeta</groupId>
+      <artifactId>main-core</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <distributionManagement>
     <repository>
