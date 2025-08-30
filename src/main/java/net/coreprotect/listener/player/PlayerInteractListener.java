@@ -161,14 +161,11 @@ public final class PlayerInteractListener extends Queue implements Listener {
                                 location = chest.getLocation();
                             }
                         } else if (ModernBetaHook.getInstance() != null) {
-                            CoreProtect.getInstance().getLogger().info("B");
                             BetaFatChestsFeature fatChests = ModernBetaHook.getInstance().getFatChestsFeature();
                             if (fatChests.isDoubleChest(clickedBlock.getType())) {
-                                CoreProtect.getInstance().getLogger().info("C");
                                 List<Block> adjacentBlocks = BlockUtil.getAdjacentBlocks(clickedBlock, BlockUtil.HORIZONTAL_FACES,
                                         b -> fatChests.isDoubleChest(b));
                                 if (adjacentBlocks.size() == 1) {
-                                    CoreProtect.getInstance().getLogger().info("D");
                                     location2 = adjacentBlocks.get(0).getLocation();
                                 }
                             }
