@@ -19,40 +19,41 @@ import net.coreprotect.utility.WorldUtils;
 
 public class TeleportCommand {
 
-    protected static void runCommand(CommandSender player, boolean permission, String[] args) {
+    protected static void runCommand(CommandSender sender, boolean permission, String[] args) {
         int resultc = args.length;
 
         if (!permission) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.NO_PERMISSION));
+            Chat.sendMessage(sender, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.NO_PERMISSION));
             return;
         }
 
-        if (!(player instanceof Player)) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.TELEPORT_PLAYERS));
+        if (!(sender instanceof Player)) {
+            Chat.sendMessage(sender, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.TELEPORT_PLAYERS));
             return;
         }
+        Player player = (Player) sender;
 
-        if (ConfigHandler.teleportThrottle.get(player.getName()) != null) {
-            Object[] lookupThrottle = ConfigHandler.teleportThrottle.get(player.getName());
+        if (ConfigHandler.teleportThrottle.get(sender.getName()) != null) {
+            Object[] lookupThrottle = ConfigHandler.teleportThrottle.get(sender.getName());
             if ((boolean) lookupThrottle[0] || ((System.currentTimeMillis() - (long) lookupThrottle[1])) < 500) {
-                Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.COMMAND_THROTTLED));
+                Chat.sendMessage(sender, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.COMMAND_THROTTLED));
                 return;
             }
         }
 
         if (resultc < 3) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co teleport <world> <x> <y> <z>"));
+            Chat.sendMessage(sender, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co teleport <world> <x> <y> <z>"));
             return;
         }
 
         String worldName = args[1];
         int wid = WorldUtils.matchWorld(worldName);
         if (wid == -1 && resultc >= 5) {
-            Chat.sendMessage(player, new ChatMessage(Phrase.build(Phrase.WORLD_NOT_FOUND, worldName)).build());
+            Chat.sendMessage(sender, new ChatMessage(Phrase.build(Phrase.WORLD_NOT_FOUND, worldName)).build());
             return;
         }
 
-        Location location = ((Player) player).getLocation().clone();
+        Location location = ((Player) sender).getLocation().clone();
         World world = location.getWorld();
         if (wid > -1) {
             world = Bukkit.getServer().getWorld(WorldUtils.getWorldName(wid));
@@ -91,7 +92,7 @@ public class TeleportCommand {
         String zValidate = z.replaceAll("[^.\\-]", "");
 
         if ((x.length() == 0 || x.length() >= 12 || x.equals(xValidate)) || (y.length() == 0 || y.length() >= 12 || y.equals(yValidate)) || (z.length() == 0 || z.length() >= 12 || z.equals(zValidate))) {
-            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co teleport <world> <x> <y> <z>"));
+            Chat.sendMessage(sender, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co teleport <world> <x> <y> <z>"));
             return;
         }
 
@@ -107,10 +108,9 @@ public class TeleportCommand {
                 location.getWorld().getChunkAt(location);
             }
 
-            // Teleport the player to a safe location
-            Teleport.performSafeTeleport(((Player) player), location, true);
+            player.performCommand("admin " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ() + " " + location.getWorld().getName());
         }, location);
 
-        ConfigHandler.teleportThrottle.put(player.getName(), new Object[] { false, System.currentTimeMillis() });
+        ConfigHandler.teleportThrottle.put(sender.getName(), new Object[] { false, System.currentTimeMillis() });
     }
 }
