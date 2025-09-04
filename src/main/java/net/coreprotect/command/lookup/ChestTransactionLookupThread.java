@@ -36,7 +36,7 @@ public class ChestTransactionLookupThread implements Runnable {
             ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { true, System.currentTimeMillis() });
             if (connection != null) {
                 Statement statement = connection.createStatement();
-                List<String> blockData = ChestTransactionLookup.performLookup(command.getName(), statement, location, null, player, page, limit);
+                List<String> blockData = ChestTransactionLookup.performLookup(command.getName(), statement, location, player, page, limit);
                 for (String data : blockData) {
                     Chat.sendComponent(player, data);
                 }

@@ -24,7 +24,7 @@ import net.coreprotect.utility.WorldUtils;
 
 public class ChestTransactionLookup {
 
-    public static List<String> performLookup(String command, Statement statement, Location l, Location l2, CommandSender commandSender, int page, int limit) {
+    public static List<String> performLookup(String command, Statement statement, Location l, CommandSender commandSender, int page, int limit) {
         List<String> result = new ArrayList<>();
 
         try {
@@ -51,9 +51,9 @@ public class ChestTransactionLookup {
             int x = (int) Math.floor(l.getX());
             int y = (int) Math.floor(l.getY());
             int z = (int) Math.floor(l.getZ());
-            int x2 = (int) Math.floor(l2.getX());
-            int y2 = (int) Math.floor(l2.getY());
-            int z2 = (int) Math.floor(l2.getZ());
+            int x2 = (int) Math.ceil(l.getX());
+            int y2 = (int) Math.ceil(l.getY());
+            int z2 = (int) Math.ceil(l.getZ());
             long time = (System.currentTimeMillis() / 1000L);
             int worldId = WorldUtils.getWorldId(l.getWorld().getName());
             int count = 0;
