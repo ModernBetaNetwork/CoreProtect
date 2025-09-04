@@ -103,13 +103,13 @@ public class TeleportCommand {
 
         int chunkX = location.getBlockX() >> 4;
         int chunkZ = location.getBlockZ() >> 4;
-        Scheduler.runTask(CoreProtect.getInstance(), () -> {
+        Scheduler.runTaskAsynchronously(CoreProtect.getInstance(), () -> {
             if (!location.getWorld().isChunkLoaded(chunkX, chunkZ)) {
                 location.getWorld().getChunkAt(location);
             }
 
             player.performCommand("admin " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ() + " " + location.getWorld().getName());
-        }, location);
+        });
 
         ConfigHandler.teleportThrottle.put(sender.getName(), new Object[] { false, System.currentTimeMillis() });
     }
