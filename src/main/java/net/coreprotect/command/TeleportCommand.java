@@ -103,12 +103,20 @@ public class TeleportCommand {
 
         int chunkX = location.getBlockX() >> 4;
         int chunkZ = location.getBlockZ() >> 4;
-        Scheduler.runTaskAsynchronously(CoreProtect.getInstance(), () -> {
-            if (!location.getWorld().isChunkLoaded(chunkX, chunkZ)) {
-                location.getWorld().getChunkAt(location);
-            }
 
-            player.performCommand("admin " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ() + " " + location.getWorld().getName());
+        Bukkit.getRegionScheduler().run(CoreProtect.getInstance(), location, locTask -> {
+            World targetWorld = location.getWorld();
+            if (!targetWorld.isChunkLoaded(chunkX, chunkZ)) {
+                targetWorld.getChunkAt(location);
+            }
+            
+            Bukkit.getRegionScheduler().run(CoreProtect.getInstance(), player.getLocation(), playerTask -> {
+                player.performCommand("admin "
+                        + location.getBlockX() + " "
+                        + location.getBlockY() + " "
+                        + location.getBlockZ() + " "
+                        + targetWorld.getName());
+            });
         });
 
         ConfigHandler.teleportThrottle.put(sender.getName(), new Object[] { false, System.currentTimeMillis() });
