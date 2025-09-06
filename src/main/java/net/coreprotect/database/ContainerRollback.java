@@ -50,16 +50,12 @@ public class ContainerRollback extends Rollback {
             Queue.queueRollbackUpdate(userString, location, lookupList, Process.CONTAINER_ROLLBACK_UPDATE, rollbackType); // Perform update transaction in consumer
 
             final String finalUserString = userString;
-            ConfigHandler.rollbackHash.put(userString, new int[] { 0, 0, 0, 0, 0 });
+            ConfigHandler.userRollbackContextMap.put(userString, new ConfigHandler.RollbackContext());
 
             Scheduler.scheduleSyncDelayedTask(CoreProtect.getInstance(), new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                        int itemCount = rollbackHashData[0];
-                        // int blockCount = rollbackHashData[1];
-                        int entityCount = rollbackHashData[2];
                         Block block = location.getBlock();
 
                         if (!block.getWorld().isChunkLoaded(block.getChunk())) {
@@ -144,7 +140,10 @@ public class ContainerRollback extends Rollback {
                         }
                         matchingFrames.clear();
 
-                        ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, modifyCount, entityCount, 1, 1 });
+                        ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(finalUserString);
+                        rollbackContext.addBlocks(modifyCount);
+                        rollbackContext.setNext(1); // don't know why, but they were in fact setting next to 1
+                        rollbackContext.setScannedWorlds(1); // don't know why, but they were in fact setting scannedWorlds to 1
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -152,23 +151,21 @@ public class ContainerRollback extends Rollback {
                 }
             }, location, 0);
 
-            int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-            int next = rollbackHashData[3];
+            ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(finalUserString);
+            int next = rollbackContext.getNext();
             int sleepTime = 0;
 
             while (next == 0) {
                 sleepTime = sleepTime + 5;
                 Thread.sleep(5);
-                rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                next = rollbackHashData[3];
+                next = rollbackContext.getNext();
                 if (sleepTime > 300000) {
                     Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
                     break;
                 }
             }
 
-            rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-            int blockCount = rollbackHashData[1];
+            int blockCount = rollbackContext.getBlockCount();
             long timeFinish = System.currentTimeMillis();
             double totalSeconds = (timeFinish - timeStart) / 1000.0;
 

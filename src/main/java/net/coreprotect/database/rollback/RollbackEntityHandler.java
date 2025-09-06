@@ -168,17 +168,10 @@ public class RollbackEntityHandler {
      *            The amount to increment the entity count by
      */
     public static void updateEntityCount(String userString, int increment) {
-        int[] rollbackHashData = ConfigHandler.rollbackHash.get(userString);
-        if (rollbackHashData != null) {
-            int itemCount = rollbackHashData[0];
-            int blockCount = rollbackHashData[1];
-            int entityCount = rollbackHashData[2];
-            int next = rollbackHashData[3];
-            int scannedWorlds = rollbackHashData[4];
-
-            entityCount += increment;
-
-            ConfigHandler.rollbackHash.put(userString, new int[] { itemCount, blockCount, entityCount, next, scannedWorlds });
+        ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(userString);
+        if (rollbackContext != null) {
+            rollbackContext.addEntities(increment);
+            // this time they don't set next at all (who knows why)
         }
     }
 

@@ -210,21 +210,12 @@ public class Rollback extends RollbackUtil {
                 }
             }
 
-            ConfigHandler.rollbackHash.put(userString, new int[] { 0, 0, 0, 0, 0 });
+            ConfigHandler.RollbackContext rollbackContext = new ConfigHandler.RollbackContext();
+            ConfigHandler.userRollbackContextMap.put(userString, rollbackContext);
 
             final String finalUserString = userString;
             for (Entry<Long, Integer> entry : DatabaseUtils.entriesSortedByValues(chunkList)) {
                 chunkCount++;
-
-                int itemCount = 0;
-                int blockCount = 0;
-                int entityCount = 0;
-                int scannedWorldData = 0;
-                int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                itemCount = rollbackHashData[0];
-                blockCount = rollbackHashData[1];
-                entityCount = rollbackHashData[2];
-                scannedWorldData = rollbackHashData[4];
 
                 long chunkKey = entry.getKey();
                 final int finalChunkX = (int) chunkKey;
@@ -246,7 +237,7 @@ public class Rollback extends RollbackUtil {
                     worldMap.put(rollbackWorldId, bukkitRollbackWorld);
                 }
 
-                ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, blockCount, entityCount, 0, scannedWorldData });
+                rollbackContext.setNext(0);
                 for (Entry<Integer, World> rollbackWorlds : worldMap.entrySet()) {
                     Integer rollbackWorldId = rollbackWorlds.getKey();
                     World bukkitRollbackWorld = rollbackWorlds.getValue();
@@ -262,9 +253,8 @@ public class Rollback extends RollbackUtil {
                     }, chunkLocation, 0);
                 }
 
-                rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                int next = rollbackHashData[3];
-                int scannedWorlds = rollbackHashData[4];
+                int next = rollbackContext.getNext();
+                int scannedWorlds = rollbackContext.getScannedWorld();
                 int sleepTime = 0;
                 int abort = 0;
 
@@ -279,9 +269,8 @@ public class Rollback extends RollbackUtil {
                         Thread.sleep(5);
                     }
 
-                    rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                    next = rollbackHashData[3];
-                    scannedWorlds = rollbackHashData[4];
+                    next = rollbackContext.getNext();
+                    scannedWorlds = rollbackContext.getScannedWorld();
 
                     if (sleepTime > 300000) {
                         abort = 1;
@@ -294,11 +283,9 @@ public class Rollback extends RollbackUtil {
                     break;
                 }
 
-                rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                itemCount = rollbackHashData[0];
-                blockCount = rollbackHashData[1];
-                entityCount = rollbackHashData[2];
-                ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, blockCount, entityCount, 0, 0 });
+                // reset rollbackContext to prepare for the next set of chunks (keeping item, block, and entity counts)
+                rollbackContext.setNext(0);
+                rollbackContext.setScannedWorlds(0);
 
                 if (verbose && user != null && preview == 0 && !actionList.contains(11)) {
                     Integer chunks = chunkList.size();
@@ -310,10 +297,9 @@ public class Rollback extends RollbackUtil {
             dataList.clear();
             itemDataList.clear();
 
-            int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-            int itemCount = rollbackHashData[0];
-            int blockCount = rollbackHashData[1];
-            int entityCount = rollbackHashData[2];
+            int itemCount = rollbackContext.getItemCount();
+            int blockCount = rollbackContext.getBlockCount();
+            int entityCount = rollbackContext.getEntityCount();
             long timeFinish = System.currentTimeMillis();
             double totalSeconds = (timeFinish - timeStart) / 1000.0;
 

@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -91,7 +94,7 @@ public class ConfigHandler extends Queue {
     public static Map<Integer, String> entitiesReversed = syncMap();
     public static Map<String, Integer> art = syncMap();
     public static Map<Integer, String> artReversed = syncMap();
-    public static Map<String, int[]> rollbackHash = syncMap();
+    public static Map<String, RollbackContext> userRollbackContextMap = syncMap();
     public static Map<String, Boolean> inspecting = syncMap();
     public static Map<String, Boolean> blacklist = syncMap();
     public static Map<String, Integer> loggingChest = syncMap();
@@ -483,6 +486,96 @@ public class ConfigHandler extends Queue {
         }
         catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @NoArgsConstructor
+    @ToString
+    public static class RollbackContext {
+        private final AtomicInteger itemCount = new AtomicInteger(0);
+        private final AtomicInteger blockCount = new AtomicInteger(0);
+        private final AtomicInteger entityCount = new AtomicInteger(0);
+        private final AtomicInteger next = new AtomicInteger(0); // next seems to be a state flag (0=IN_PROGRESS, 1=COMPLETE?, 2=ERROR)
+        private final AtomicInteger scannedWorld = new AtomicInteger(0);
+
+        /**
+         * @return Number of updated items
+         */
+        public int getItemCount() {
+            return this.itemCount.get();
+        }
+
+        /**
+         * @return Number of updated blocks
+         */
+        public int getBlockCount() {
+            return this.blockCount.get();
+        }
+
+        /**
+         * @return Number of updated entities
+         */
+        public int getEntityCount() {
+            return this.entityCount.get();
+        }
+
+        public int getNext() {
+            return this.next.get();
+        }
+
+        /**
+         * @return Number of worlds that we have finished scanning
+         */
+        public int getScannedWorld() {
+            return this.scannedWorld.get();
+        }
+
+        /**
+         * Thread-safe. Add items to the itemCount
+         * @param items number of items to add
+         */
+        public void addItems(int items) {
+            this.itemCount.addAndGet(items);
+        }
+
+        /**
+         * Thread-safe. Add blocks to blocksCount
+         * @param blocks number of blocks to add
+         */
+        public void addBlocks(int blocks) {
+            this.blockCount.addAndGet(blocks);
+        }
+
+        /**
+         * Thread-safe. Add entities to the entityCount
+         * @param entities number of entities to add
+         */
+        public void addEntities(int entities) {
+            this.entityCount.addAndGet(entities);
+        }
+
+        /**
+         * Thread-safe. Add worlds to the worldCount
+         * @param worlds number of worlds to add
+         */
+        public void addWorlds(int worlds) {
+            this.scannedWorld.addAndGet(worlds);
+        }
+
+        /**
+         * Set next to a given value. Should ohly be used for setting static values (like 0)
+         * @param next new next value
+         */
+        public void setNext(int next) {
+            this.next.set(next);
+        }
+
+        /**
+         * Set scannedWorlds to the given value. Should only be used for setting static values (like 0)
+         * @param scannedWorlds new scanned worlds value
+         */
+        public void setScannedWorlds(int scannedWorlds) {
+            this.scannedWorld.set(scannedWorlds);
         }
     }
 

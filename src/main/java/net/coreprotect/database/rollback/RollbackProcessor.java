@@ -64,6 +64,7 @@ public class RollbackProcessor {
      * @return True if successful, false if there was an error
      */
     public static boolean processChunk(int finalChunkX, int finalChunkZ, long chunkKey, ArrayList<Object[]> blockList, ArrayList<Object[]> itemList, int rollbackType, int preview, String finalUserString, Player finalUser, World bukkitRollbackWorld, boolean inventoryRollback) {
+        ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(finalUserString);
         try {
             boolean clearInventories = Config.getGlobal().ROLLBACK_ITEMS;
             ArrayList<Object[]> data = blockList != null ? blockList : new ArrayList<>();
@@ -72,11 +73,8 @@ public class RollbackProcessor {
 
             // Process blocks
             for (Object[] row : data) {
-                int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-                int itemCount = rollbackHashData[0];
-                int blockCount = rollbackHashData[1];
-                int entityCount = rollbackHashData[2];
-                int scannedWorlds = rollbackHashData[4];
+                int blocksUpdated = 0;
+                int entitiesUpdated = 0;
 
                 int rowX = (Integer) row[3];
                 int rowY = (Integer) row[4];
@@ -153,22 +151,22 @@ public class RollbackProcessor {
                             Material blockType = block.getType();
                             if (!BukkitAdapter.ADAPTER.isItemFrame(blockType) && !blockType.equals(Material.PAINTING) && !blockType.equals(Material.ARMOR_STAND) && !blockType.equals(Material.END_CRYSTAL)) {
                                 BlockUtils.prepareTypeAndData(chunkChanges, block, blockType, block.getBlockData(), true);
-                                blockCount++;
+                                blocksUpdated++;
                             }
                         }
                         else {
                             if ((!BukkitAdapter.ADAPTER.isItemFrame(rowType)) && (rowType != Material.PAINTING) && (rowType != Material.ARMOR_STAND) && (rowType != Material.END_CRYSTAL)) {
                                 BlockUtils.prepareTypeAndData(chunkChanges, block, rowType, blockData, true);
-                                blockCount++;
+                                blocksUpdated++;
                             }
                         }
                     }
                     else {
-                        entityCount++;
+                        entitiesUpdated++;
                     }
                 }
                 else if (rowAction == 3) { // entity kill
-                    entityCount += RollbackEntityHandler.processEntity(row, rollbackType, finalUserString, oldTypeRaw, rowTypeRaw, rowData, rowAction, MaterialUtils.rolledBack((Integer) row[9], false), rowX, rowY, rowZ, rowWorldId, (Integer) row[2], rowUser);
+                    entitiesUpdated += RollbackEntityHandler.processEntity(row, rollbackType, finalUserString, oldTypeRaw, rowTypeRaw, rowData, rowAction, MaterialUtils.rolledBack((Integer) row[9], false), rowX, rowY, rowZ, rowWorldId, (Integer) row[2], rowUser);
                 }
                 else {
                     String world = WorldUtils.getWorldName(rowWorldId);
@@ -234,11 +232,13 @@ public class RollbackProcessor {
                     }
 
                     if (RollbackBlockHandler.processBlockChange(bukkitWorld, block, row, rollbackType, clearInventories, chunkChanges, countBlock, oldTypeMaterial, pendingChangeType, pendingChangeData, finalUserString, rawBlockData, changeType, changeBlock, changeBlockData, meta != null ? new ArrayList<>(meta) : null, blockData, rowUser, rowType, rowX, rowY, rowZ, rowTypeRaw, rowData, rowAction, rowWorldId, BlockUtils.byteDataToString((byte[]) row[13], rowTypeRaw)) && countBlock) {
-                        blockCount++;
+                        blocksUpdated++;
                     }
                 }
 
-                ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, blockCount, entityCount, 0, scannedWorlds });
+                rollbackContext.addBlocks(blocksUpdated);
+                rollbackContext.addEntities(entitiesUpdated);
+                rollbackContext.setNext(0); // don't know why, but they were in fact setting next to 0
             }
             data.clear();
 
@@ -257,11 +257,7 @@ public class RollbackProcessor {
             String lastFace = "";
 
             for (Object[] row : itemData) {
-                int[] rollbackHashData1 = ConfigHandler.rollbackHash.get(finalUserString);
-                int itemCount1 = rollbackHashData1[0];
-                int blockCount1 = rollbackHashData1[1];
-                int entityCount1 = rollbackHashData1[2];
-                int scannedWorlds = rollbackHashData1[4];
+                int itemsUpdated = 0;
                 int rowX = (Integer) row[3];
                 int rowY = (Integer) row[4];
                 int rowZ = (Integer) row[5];
@@ -320,8 +316,8 @@ public class RollbackProcessor {
                             sortPlayers.put(player, currentSortList);
                         }
 
-                        itemCount1 = itemCount1 + rowAmount;
-                        ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount1, blockCount1, entityCount1, 0, scannedWorlds });
+                        rollbackContext.addItems(rowAmount);
+                        rollbackContext.setNext(0); // don't know why, but they were in fact setting next to 0
                         continue; // remove this for merged rollbacks in future? (be sure to re-enable chunk sorting)
                     }
 
@@ -400,13 +396,14 @@ public class RollbackProcessor {
                             itemstack = (ItemStack) populatedStack[2];
 
                             RollbackUtil.modifyContainerItems(containerType, container, slot, itemstack, action);
-                            itemCount1 = itemCount1 + rowAmount;
+                            itemsUpdated += rowAmount;
                         }
                         containerInit = true;
                     }
                 }
 
-                ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount1, blockCount1, entityCount1, 0, scannedWorlds });
+                rollbackContext.addItems(itemsUpdated);
+                rollbackContext.setNext(0); // don't know why, but they were in fact setting next to 0
             }
             itemData.clear();
 
@@ -415,12 +412,9 @@ public class RollbackProcessor {
             }
             sortPlayers.clear();
 
-            int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-            int itemCount = rollbackHashData[0];
-            int blockCount = rollbackHashData[1];
-            int entityCount = rollbackHashData[2];
-            int scannedWorlds = rollbackHashData[4];
-            ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, blockCount, entityCount, 1, (scannedWorlds + 1) });
+            // finished processing chunk, update context
+            rollbackContext.setNext(1);
+            rollbackContext.addWorlds(1);
 
             // Teleport players out of danger if they're within this chunk
             if (preview == 0) {
@@ -440,13 +434,9 @@ public class RollbackProcessor {
         }
         catch (Exception e) {
             e.printStackTrace();
-            int[] rollbackHashData = ConfigHandler.rollbackHash.get(finalUserString);
-            int itemCount = rollbackHashData[0];
-            int blockCount = rollbackHashData[1];
-            int entityCount = rollbackHashData[2];
-            int scannedWorlds = rollbackHashData[4];
-
-            ConfigHandler.rollbackHash.put(finalUserString, new int[] { itemCount, blockCount, entityCount, 2, (scannedWorlds + 1) });
+            // chunk processing ran into error, update context
+            rollbackContext.setNext(2); // abort rollback when current chunks finish
+            rollbackContext.addWorlds(1);
             return false;
         }
     }

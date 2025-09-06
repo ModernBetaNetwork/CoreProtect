@@ -100,14 +100,9 @@ public class RollbackItemHandler {
      *            The amount to increment the item count by
      */
     public static void updateItemCount(String userString, int increment) {
-        int[] rollbackHashData = ConfigHandler.rollbackHash.get(userString);
-        int itemCount = rollbackHashData[0];
-        int blockCount = rollbackHashData[1];
-        int entityCount = rollbackHashData[2];
-        int scannedWorlds = rollbackHashData[4];
-
-        itemCount += increment;
-        ConfigHandler.rollbackHash.put(userString, new int[] { itemCount, blockCount, entityCount, 0, scannedWorlds });
+        ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(userString);
+        rollbackContext.addItems(increment);
+        rollbackContext.setNext(0); // don't know why, but they were in fact setting next to 0
     }
 
 }
