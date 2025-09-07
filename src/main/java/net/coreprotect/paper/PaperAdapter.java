@@ -74,7 +74,7 @@ public class PaperAdapter implements PaperInterface {
 
     @Override
     public void teleportAsync(Entity entity, Location location) {
-        entity.teleport(location);
+        entity.teleportAsync(location);
     }
 
     @Override

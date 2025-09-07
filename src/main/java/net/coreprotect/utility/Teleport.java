@@ -104,7 +104,7 @@ public class Teleport {
                         PaperAdapter.ADAPTER.teleportAsync(player, location);
                     }
                     else {
-                        player.teleport(location);
+                        player.teleportAsync(location);
                     }
 
                     if (!enforceTeleport) {
