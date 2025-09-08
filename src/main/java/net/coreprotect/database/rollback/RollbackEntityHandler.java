@@ -12,6 +12,7 @@ import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.thread.CacheHandler;
 import net.coreprotect.utility.EntityUtils;
 import net.coreprotect.utility.WorldUtils;
+import org.bukkit.entity.LivingEntity;
 
 public class RollbackEntityHandler {
 
@@ -123,7 +124,8 @@ public class RollbackEntityHandler {
                         }
 
                         if (!removed && entityId > -1) {
-                            for (Entity entity : block.getWorld().getLivingEntities()) {
+                            for (Entity entity : block.getWorld().getEntitiesByClassForRegion(LivingEntity.class)) {
+                                if ( !entity.isValid()) continue;
                                 int id = entity.getEntityId();
                                 if (id == entityId) {
                                     updateEntityCount(finalUserString, 1);
