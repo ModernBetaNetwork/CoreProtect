@@ -16,10 +16,7 @@ import org.bukkit.block.banner.Pattern;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
-import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.CrossbowMeta;
@@ -93,7 +90,7 @@ public class RollbackUtil extends Lookup {
                 }
             }
             else if (type != null && type.equals(Material.JUKEBOX)) {
-                Jukebox jukebox = (Jukebox) container;
+                JukeboxInventory  jukebox = (JukeboxInventory) container;
                 if (jukebox != null) {
                     if (action == 1 && itemstack.getType().name().startsWith("MUSIC_DISC")) {
                         itemstack.setAmount(1);
@@ -104,7 +101,7 @@ public class RollbackUtil extends Lookup {
                     }
 
                     jukebox.setRecord(itemstack);
-                    jukebox.update();
+                    jukebox.getHolder().update();
                 }
             }
             else {
