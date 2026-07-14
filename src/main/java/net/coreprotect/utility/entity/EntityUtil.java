@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.coreprotect.config.Config;
+import net.coreprotect.utility.EntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -73,7 +75,12 @@ public class EntityUtil {
     public static void spawnEntity(final BlockState block, final EntityType type, final List<Object> list) {
         if (type == null) {
             return;
+        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        } else if ( ! isRollbackable(type) ) {
+            return;
+        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
         }
+
         Scheduler.runTask(CoreProtect.getInstance(), () -> {
             try {
                 Location location = block.getLocation();
@@ -602,4 +609,13 @@ public class EntityUtil {
         }, block.getLocation());
     }
 
+    /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+    public static boolean isRollbackable(int type) {
+        return isRollbackable(EntityUtils.getEntityType(type));
+    }
+
+    public static boolean isRollbackable(EntityType entityType) {
+        return ! Config.getGlobal().USE_NON_ROLLBACKABLE_ENTITY_KILLS || Config.getGlobal().ROLLBACKABLE_ENTITIES.contains(entityType);
+    }
+    /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 }

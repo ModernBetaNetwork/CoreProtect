@@ -13,12 +13,21 @@ import net.coreprotect.utility.entity.EntityUtil;
 class EntitySpawnProcess {
 
     static void process(Statement statement, Object object, int rowId) {
+        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        if ( rowId <= 0 ) // No mob data? skip processing
+            return;
+        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+
         if (object instanceof Object[]) {
             BlockState block = (BlockState) ((Object[]) object)[0];
             EntityType type = (EntityType) ((Object[]) object)[1];
             String query = "SELECT data FROM " + ConfigHandler.prefix + "entity WHERE rowid='" + rowId + "' LIMIT 0, 1";
             List<Object> data = EntityStatement.getData(statement, block, query);
-            EntityUtil.spawnEntity(block, type, data);
+            /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+            if (  ! data.isEmpty() ) {
+            /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+                EntityUtil.spawnEntity(block, type, data);
+            }
         }
     }
 }

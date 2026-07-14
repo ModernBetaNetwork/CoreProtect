@@ -1,5 +1,6 @@
 package net.coreprotect.database.rollback;
 
+import net.coreprotect.utility.entity.EntityUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -68,12 +69,16 @@ public class RollbackEntityHandler {
 
                 if (rowTypeRaw > 0) {
                     // Spawn in entity
-                    if (rowRolledBack == 0) {
+                    if (rowRolledBack == 0 && rowData > 0) {
                         EntityType entityType = EntityUtils.getEntityType(rowTypeRaw);
-                        // Use the spawnEntity method from the RollbackUtil class instead of Queue
-                        spawnEntity(rowUser, block.getState(), entityType, rowData);
-                        updateEntityCount(finalUserString, 1);
-                        return 1;
+                        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+                        if ( EntityUtil.isRollbackable(entityType) ) {
+                        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+                            // Use the spawnEntity method from the RollbackUtil class instead of Queue
+                            spawnEntity(rowUser, block.getState(), entityType, rowData);
+                            updateEntityCount(finalUserString, 1);
+                            return 1;
+                        }
                     }
                 }
                 else if (rowTypeRaw <= 0) {
@@ -190,6 +195,8 @@ public class RollbackEntityHandler {
      *            Additional data for the entity
      */
     public static void spawnEntity(String user, BlockState block, EntityType type, int data) {
+        if ( data <= 0 ) // No mob data? skip processing
+            return;
         // Create a new helper method that will delegate to Queue
         RollbackUtil.queueEntitySpawn(user, block, type, data);
     }

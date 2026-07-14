@@ -1,10 +1,6 @@
 package net.coreprotect.listener.entity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -282,6 +278,12 @@ public final class EntityDeathListener extends Queue implements Listener {
 
             if (entity instanceof Tameable) {
                 Tameable tameable = (Tameable) entity;
+                /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+                if ( ! tameable.isTamed() ) { // If not tamed, then forcibly queue empty data so it won't persist mob data
+                    Queue.queueEntityKill(e, entity.getLocation(), Collections.emptyList(), type);
+                    return;
+                }
+                /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
                 tame.add(tameable.isTamed());
                 if (tameable.isTamed()) {
                     if (tameable.getOwner() != null) {

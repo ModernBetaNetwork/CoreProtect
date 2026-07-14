@@ -17,6 +17,7 @@ import net.coreprotect.database.statement.EntityStatement;
 import net.coreprotect.database.statement.UserStatement;
 import net.coreprotect.event.CoreProtectPreLogEvent;
 import net.coreprotect.utility.WorldUtils;
+import net.coreprotect.utility.entity.EntityUtil;
 
 public class EntityKillLogger {
 
@@ -47,17 +48,24 @@ public class EntityKillLogger {
             int z = block.getZ();
             int entity_key = 0;
 
-            ResultSet resultSet = EntityStatement.insert(preparedStmt2, time, data);
-            if (Database.hasReturningKeys()) {
-                resultSet.next();
-                entity_key = resultSet.getInt(1);
-                resultSet.close();
-            }
-            else {
-                ResultSet keys = preparedStmt2.getGeneratedKeys();
-                keys.next();
-                entity_key = keys.getInt(1);
-                keys.close();
+            /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+            if ( EntityUtil.isRollbackable(type) && ! data.isEmpty() ) { // wild wolves will have empty data
+            /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+                ResultSet resultSet = EntityStatement.insert(preparedStmt2, time, data);
+                if (Database.hasReturningKeys()) {
+                    resultSet.next();
+                    entity_key = resultSet.getInt(1);
+                    resultSet.close();
+                } else {
+                    ResultSet keys = preparedStmt2.getGeneratedKeys();
+                    keys.next();
+                    entity_key = keys.getInt(1);
+                    keys.close();
+                }
+            /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+            } else {
+                entity_key = -1; // not rollbackable, data not persisted
+            /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
             }
 
             BlockStatement.insert(preparedStmt, batchCount, time, userId, wid, x, y, z, type, entity_key, null, null, 3, 0);

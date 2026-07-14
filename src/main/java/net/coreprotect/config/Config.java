@@ -9,10 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -20,6 +19,7 @@ import org.bukkit.World;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.language.Language;
 import net.coreprotect.thread.Scheduler;
+import org.bukkit.entity.EntityType;
 
 public class Config extends Language {
 
@@ -91,6 +91,10 @@ public class Config extends Language {
     public int MYSQL_PORT;
     public int DEFAULT_RADIUS;
     public int MAX_RADIUS;
+    /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+    public boolean USE_NON_ROLLBACKABLE_ENTITY_KILLS;
+    public Set<EntityType> ROLLBACKABLE_ENTITIES;
+    /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -141,6 +145,10 @@ public class Config extends Language {
         DEFAULT_VALUES.put("player-sessions", "true");
         DEFAULT_VALUES.put("username-changes", "true");
         DEFAULT_VALUES.put("worldedit", "true");
+        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        DEFAULT_VALUES.put("use-non-rollbackable-entity-kills", "false");
+        DEFAULT_VALUES.put("rollbackable-entities", "");
+        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
@@ -184,6 +192,10 @@ public class Config extends Language {
         HEADERS.put("player-sessions", new String[] { "# Logs the logins and logouts of players." });
         HEADERS.put("username-changes", new String[] { "# Logs when a player changes their Minecraft username." });
         HEADERS.put("worldedit", new String[] { "# Logs changes made via the plugin \"WorldEdit\" if it's in use on your server." });
+        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        HEADERS.put("use-non-rollbackable-entity-kills", new String[] { "# ModernBeta: If false, all entities will be rollbackable. If true, only those in the rollbackable-entities list will be rollbackable" });
+        HEADERS.put("rollbackable-entities", new String[] { "# ModernBeta: List of entities that can be rollbacked" });
+        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
     }
 
     private void readValues() {
@@ -245,7 +257,35 @@ public class Config extends Language {
         this.PLAYER_SESSIONS = this.getBoolean("player-sessions");
         this.USERNAME_CHANGES = this.getBoolean("username-changes");
         this.WORLDEDIT = this.getBoolean("worldedit");
+
+        /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        this.USE_NON_ROLLBACKABLE_ENTITY_KILLS = this.getBoolean("use-non-rollbackable-entity-kills", false);
+        this.ROLLBACKABLE_ENTITIES = asEnumSet(EntityType.class, EntityType::valueOf, this.getStringList("rollbackable-entities"));
+        final CoreProtect plugin = CoreProtect.getInstance();
+        if ( this.USE_NON_ROLLBACKABLE_ENTITY_KILLS ) {
+            plugin.getLogger().info(String.format("Rollbackable entity whitelist is in use: %s", this.ROLLBACKABLE_ENTITIES));
+        } else {
+            plugin.getLogger().info(String.format("All entities are rollbackable"));
+        }
+        /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
     }
+
+    /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+    private static <E extends Enum<E>> Set<E> asEnumSet(Class<E> type, Function<String, E> valueOf, List<String> values) {
+        if ( values == null  || values.isEmpty() )
+            return Collections.emptySet();
+        Set<E> set = EnumSet.noneOf(type);
+        for ( String value : values ) {
+            value = value.trim();
+            if ( value.contains("minecraft:") )
+                value = value.split(":")[1];
+            if ( value.isBlank() )
+                continue;
+            set.add(valueOf.apply(value.toUpperCase(Locale.ROOT)));
+        }
+        return Collections.unmodifiableSet(set);
+    }
+    /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
     public static void init() throws IOException {
         parseConfig(loadFiles(ConfigFile.CONFIG));
@@ -319,6 +359,12 @@ public class Config extends Language {
 
         return configured.isEmpty() ? dfl : Integer.parseInt(configured);
     }
+
+    /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+    private List<String> getStringList(final String key) {
+        return List.of(this.getString(key).split(","));
+    }
+    /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
     private String getString(final String key) {
         final String configured = this.get(key, null);
