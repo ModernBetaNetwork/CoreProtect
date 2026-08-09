@@ -49,7 +49,7 @@ public class EntityKillLogger {
             int entity_key = 0;
 
             /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-            if ( EntityUtil.isRollbackable(type) && ! data.isEmpty() ) { // wild wolves will have empty data
+            if ( EntityUtil.isRollbackable(type) ) {
             /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
                 ResultSet resultSet = EntityStatement.insert(preparedStmt2, time, data);
                 if (Database.hasReturningKeys()) {
