@@ -615,7 +615,7 @@ public class EntityUtil {
     }
 
     public static boolean isRollbackable(EntityType entityType) {
-        return ! Config.getGlobal().USE_NON_ROLLBACKABLE_ENTITY_KILLS || Config.getGlobal().ROLLBACKABLE_ENTITIES.contains(entityType);
+        return ! Config.getGlobal().USE_ROLLBACKABLE_ENTITY_LIST || Config.getGlobal().ROLLBACKABLE_ENTITIES.contains(entityType);
     }
     /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 }

@@ -92,7 +92,7 @@ public class Config extends Language {
     public int DEFAULT_RADIUS;
     public int MAX_RADIUS;
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-    public boolean USE_NON_ROLLBACKABLE_ENTITY_KILLS;
+    public boolean USE_ROLLBACKABLE_ENTITY_LIST;
     public Set<EntityType> ROLLBACKABLE_ENTITIES;
     /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
@@ -146,7 +146,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("username-changes", "true");
         DEFAULT_VALUES.put("worldedit", "true");
         /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-        DEFAULT_VALUES.put("use-non-rollbackable-entity-kills", "false");
+        DEFAULT_VALUES.put("use-rollbackable-entity-list", "false");
         DEFAULT_VALUES.put("rollbackable-entities", "");
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
@@ -193,7 +193,7 @@ public class Config extends Language {
         HEADERS.put("username-changes", new String[] { "# Logs when a player changes their Minecraft username." });
         HEADERS.put("worldedit", new String[] { "# Logs changes made via the plugin \"WorldEdit\" if it's in use on your server." });
         /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-        HEADERS.put("use-non-rollbackable-entity-kills", new String[] { "# ModernBeta: If false, all entities will be rollbackable. If true, only those in the rollbackable-entities list will be rollbackable" });
+        HEADERS.put("use-rollbackable-entity-list", new String[] { "# ModernBeta: If false, all entities will be rollbackable. If true, only those in the rollbackable-entities list will be rollbackable" });
         HEADERS.put("rollbackable-entities", new String[] { "# ModernBeta: List of entities that can be rollbacked" });
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
     }
@@ -259,10 +259,10 @@ public class Config extends Language {
         this.WORLDEDIT = this.getBoolean("worldedit");
 
         /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-        this.USE_NON_ROLLBACKABLE_ENTITY_KILLS = this.getBoolean("use-non-rollbackable-entity-kills", false);
+        this.USE_ROLLBACKABLE_ENTITY_LIST = this.getBoolean("use-rollbackable-entity-list", false);
         this.ROLLBACKABLE_ENTITIES = asEnumSet(EntityType.class, EntityType::valueOf, this.getStringList("rollbackable-entities"));
         final CoreProtect plugin = CoreProtect.getInstance();
-        if ( this.USE_NON_ROLLBACKABLE_ENTITY_KILLS ) {
+        if ( this.USE_ROLLBACKABLE_ENTITY_LIST) {
             plugin.getLogger().info(String.format("Rollbackable entity whitelist is in use: %s", this.ROLLBACKABLE_ENTITIES));
         } else {
             plugin.getLogger().info(String.format("All entities are rollbackable"));
