@@ -93,6 +93,10 @@ public class CommandHandler implements CommandExecutor {
                     HelpCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("purge")) {
+                    if ( true ) { // ModernBeta: Do not allow purge command (even on accident)
+                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+                        return true;
+                    }
                     PurgeCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("inspect") || corecommand.equals("i")) {

@@ -39,6 +39,7 @@ public class Language {
         phrases.put(Phrase.CACHE_RELOAD, "Forcing reload of {mapping|world} caches from database.");
         phrases.put(Phrase.CHECK_CONFIG, "Please check config.yml");
         phrases.put(Phrase.COMMAND_CONSOLE, "Please run the command from the console.");
+        phrases.put(Phrase.COMMAND_IS_DISABLED, "Command is disabled");
         phrases.put(Phrase.COMMAND_NOT_FOUND, "Command \"{0}\" not found.");
         phrases.put(Phrase.COMMAND_THROTTLED, "Please wait a moment and try again.");
         phrases.put(Phrase.CONSUMER_ERROR, "Consumer queue processing already {paused|resumed}.");

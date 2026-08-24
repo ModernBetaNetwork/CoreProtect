@@ -35,6 +35,11 @@ import net.coreprotect.utility.VersionUtils;
 public class PurgeCommand extends Consumer {
 
     protected static void runCommand(final CommandSender player, boolean permission, String[] args) {
+        if ( true ) { // ModernBeta: Do not allow purge command (even on accident)
+            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+            return;
+        }
+
         int resultc = args.length;
         Location location = CommandParser.parseLocation(player, args);
         final Integer[] argRadius = CommandParser.parseRadius(args, player, location);
