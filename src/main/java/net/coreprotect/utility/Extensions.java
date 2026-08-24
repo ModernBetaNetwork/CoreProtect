@@ -9,6 +9,11 @@ import net.coreprotect.language.Phrase;
 public class Extensions {
 
     public static void runDatabaseMigration(String command, CommandSender user, String[] argumentArray) {
+        if ( true ) { // ModernBeta: Do not allow migrate-db command (even on accident)
+            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+            return;
+        }
+
         try {
             Class<?> patchClass = Class.forName("net.coreprotect.utility.extensions.DatabaseMigration");
             Method patchMethod = patchClass.getDeclaredMethod("runCommand", CommandSender.class, String[].class);

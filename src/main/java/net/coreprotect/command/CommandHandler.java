@@ -124,6 +124,10 @@ public class CommandHandler implements CommandExecutor {
                     NetworkDebugCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("migrate-db")) {
+                    if ( true ) { // ModernBeta: Do not allow migrade-db command (even on accident)
+                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+                        return true;
+                    }
                     if (!VersionUtils.validDonationKey()) {
                         Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.DONATION_KEY_REQUIRED));
                     }
