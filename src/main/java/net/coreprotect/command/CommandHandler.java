@@ -12,7 +12,6 @@ import net.coreprotect.language.Phrase;
 import net.coreprotect.thread.NetworkHandler;
 import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.Color;
-import net.coreprotect.utility.Extensions;
 import net.coreprotect.utility.VersionUtils;
 
 public class CommandHandler implements CommandExecutor {
@@ -93,11 +92,9 @@ public class CommandHandler implements CommandExecutor {
                     HelpCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("purge")) {
-                    if ( true ) { // ModernBeta: Do not allow purge command (even on accident)
-                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
-                        return true;
-                    }
-                    PurgeCommand.runCommand(user, permission, argumentArray);
+                    // ModernBeta: Do not allow purge command (even on accident)
+                    Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+                    return true;
                 }
                 else if (corecommand.equals("inspect") || corecommand.equals("i")) {
                     InspectCommand.runCommand(user, permission, argumentArray);
@@ -124,16 +121,9 @@ public class CommandHandler implements CommandExecutor {
                     NetworkDebugCommand.runCommand(user, permission, argumentArray);
                 }
                 else if (corecommand.equals("migrate-db")) {
-                    if ( true ) { // ModernBeta: Do not allow migrade-db command (even on accident)
-                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
-                        return true;
-                    }
-                    if (!VersionUtils.validDonationKey()) {
-                        Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.DONATION_KEY_REQUIRED));
-                    }
-                    else {
-                        Extensions.runDatabaseMigration(corecommand, user, argumentArray);
-                    }
+                    // ModernBeta: Do not allow migrade-db command (even on accident)
+                    Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Color.RED + Phrase.build(Phrase.COMMAND_IS_DISABLED));
+                    return true;
                 }
                 else {
                     Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.COMMAND_NOT_FOUND, Color.WHITE, "/co " + corecommand));

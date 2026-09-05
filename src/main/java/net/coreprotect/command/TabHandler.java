@@ -21,8 +21,8 @@ import net.coreprotect.config.ConfigHandler;
 
 public class TabHandler implements TabCompleter {
 
-    // private static String[] COMMANDS = new String[] { "help", "inspect", "rollback", "restore", "lookup", "purge", "reload", "status", "near", "undo" }; // max 10!
-    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "lookup", "purge", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude" };
+    // private static String[] COMMANDS = new String[] { "help", "inspect", "rollback", "restore", "lookup", "reload", "status", "near", "undo" }; // max 10!
+    private static final String[] HELP = new String[] { "inspect", "rollback", "restore", "lookup", "teleport", "status", "params", "users", "time", "radius", "action", "include", "exclude" };
     private static final String[] PARAMS = new String[] { "user:", "time:", "radius:", "action:", "include:", "exclude:", "#container" };
     private static final String[] ACTIONS = new String[] { "block", "+block", "-block", "click", "kill", "+container", "-container", "container", "chat", "command", "+inventory", "-inventory", "inventory", "item", "+item", "-item", "sign", "session", "+session", "-session", "username" };
     private static final String[] NUMBERS = new String[] { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
@@ -68,7 +68,7 @@ public class TabHandler implements TabCompleter {
             return handleSecondArgCompletions(sender, argument0, args[1], paramState);
         }
         else if (args.length == 3 && argument0.equals("purge") && sender.hasPermission("coreprotect.purge")) {
-            return handlePurgeThirdArgCompletions(args[1], args[2]);
+            // ModernBeta: Remove reference to purge command
         }
         else if (hasLookupCommand(argument0, sender) && (!argument0.equals("l") && !argument0.equals("lookup") || !paramState.hasPage)) {
             return handleGenericLookupCompletions(argument0, currentArg, paramState);
@@ -86,7 +86,7 @@ public class TabHandler implements TabCompleter {
         addCompletionIfPermitted(sender, "coreprotect.rollback", "rollback", completions);
         addCompletionIfPermitted(sender, "coreprotect.restore", "restore", completions);
         addCompletionIfPermitted(sender, "coreprotect.lookup", "lookup", completions);
-        addCompletionIfPermitted(sender, "coreprotect.purge", "purge", completions);
+        // ModernBeta: Remove reference to purge command
         addCompletionIfPermitted(sender, "coreprotect.reload", "reload", completions);
         addCompletionIfPermitted(sender, "coreprotect.status", "status", completions);
         addCompletionIfPermitted(sender, "coreprotect.lookup.near", "near", completions);
