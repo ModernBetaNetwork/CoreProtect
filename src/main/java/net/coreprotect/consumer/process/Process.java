@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Material;
 
 import net.coreprotect.config.Config;
@@ -16,6 +17,7 @@ import net.coreprotect.consumer.Consumer;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.statement.UserStatement;
 
+@Slf4j
 public class Process {
 
     public static final int BLOCK_BREAK = 0;
@@ -47,6 +49,38 @@ public class Process {
     public static final int INVENTORY_CONTAINER_ROLLBACK_UPDATE = 28;
     public static final int BLOCK_INVENTORY_ROLLBACK_UPDATE = 29;
 
+    public static final String[] ACTION_STRINGS = new String[30];
+    static {
+        ACTION_STRINGS[BLOCK_BREAK] = "BLOCK_BREAK";
+        ACTION_STRINGS[BLOCK_PLACE] = "BLOCK_PLACE";
+        ACTION_STRINGS[SIGN_TEXT] = "SIGN_TEXT";
+        ACTION_STRINGS[CONTAINER_BREAK] = "CONTAINER_BREAK";
+        ACTION_STRINGS[PLAYER_INTERACTION] = "PLAYER_INTERACTION";
+        ACTION_STRINGS[CONTAINER_TRANSACTION] = "CONTAINER_TRANSACTION";
+        ACTION_STRINGS[STRUCTURE_GROWTH] = "STRUCTURE_GROWTH";
+        ACTION_STRINGS[ROLLBACK_UPDATE] = "ROLLBACK_UPDATE";
+        ACTION_STRINGS[CONTAINER_ROLLBACK_UPDATE] = "CONTAINER_ROLLBACK_UPDATE";
+        ACTION_STRINGS[WORLD_INSERT] = "WORLD_INSERT";
+        ACTION_STRINGS[SIGN_UPDATE] = "SIGN_UPDATE";
+        ACTION_STRINGS[SKULL_UPDATE] = "SKULL_UPDATE";
+        ACTION_STRINGS[PLAYER_CHAT] = "PLAYER_CHAT";
+        ACTION_STRINGS[PLAYER_COMMAND] = "PLAYER_COMMAND";
+        ACTION_STRINGS[PLAYER_LOGIN] = "PLAYER_LOGIN";
+        ACTION_STRINGS[PLAYER_LOGOUT] = "PLAYER_LOGOUT";
+        ACTION_STRINGS[ENTITY_KILL] = "ENTITY_KILL";
+        ACTION_STRINGS[ENTITY_SPAWN] = "ENTITY_SPAWN";
+        ACTION_STRINGS[NATURAL_BLOCK_BREAK] = "NATURAL_BLOCK_BREAK";
+        ACTION_STRINGS[MATERIAL_INSERT] = "MATERIAL_INSERT";
+        ACTION_STRINGS[ART_INSERT] = "ART_INSERT";
+        ACTION_STRINGS[ENTITY_INSERT] = "ENTITY_INSERT";
+        ACTION_STRINGS[PLAYER_KILL] = "PLAYER_KILL";
+        ACTION_STRINGS[BLOCKDATA_INSERT] = "BLOCKDATA_INSERT";
+        ACTION_STRINGS[ITEM_TRANSACTION] = "ITEM_TRANSACTION";
+        ACTION_STRINGS[INVENTORY_ROLLBACK_UPDATE] = "INVENTORY_ROLLBACK_UPDATE";
+        ACTION_STRINGS[INVENTORY_CONTAINER_ROLLBACK_UPDATE] = "INVENTORY_CONTAINER_ROLLBACK_UPDATE";
+        ACTION_STRINGS[BLOCK_INVENTORY_ROLLBACK_UPDATE] = "BLOCK_INVENTORY_ROLLBACK_UPDATE";
+    }
+
     public static int lastLockUpdate = 0;
     private static volatile int currentConsumerSize = 0;
 
@@ -69,6 +103,9 @@ public class Process {
     }
 
     protected static void processConsumer(int processId, boolean lastRun) {
+        final long consumerStart = System.currentTimeMillis();
+        int[] processedByAction = new int[30];
+        long[] elapsedByAction = new long[30];
         try (Connection connection = Database.getConnection(false, 500)) {
             if (connection == null) {
                 return;
@@ -141,6 +178,7 @@ public class Process {
                         Object object = consumerObject.get(id);
 
                         try {
+                            long start = System.currentTimeMillis();
                             switch (action) {
                                 case Process.BLOCK_BREAK:
                                     BlockBreakProcess.process(preparedStmtBlocks, preparedStmtSkulls, i, processId, id, blockType, blockData, replaceType, forceData, user, object, (String) data[7]);
@@ -227,6 +265,8 @@ public class Process {
                                     BlockDataInsertProcess.process(preparedStmtBlockdata, statement, i, object, forceData);
                                     break;
                             }
+                            elapsedByAction[action] += System.currentTimeMillis() - start;
+                            processedByAction[action]++;
 
                             // If database connection goes missing, remove processed data from consumer and abort
                             if (statement.isClosed()) {
@@ -281,6 +321,18 @@ public class Process {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            long consumerElapsed = System.currentTimeMillis() - consumerStart;
+            if (consumerElapsed > Config.getGlobal().CONSUMER_WARN_TIMEOUT_MS) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("[CoreProtect] WARNING: Consumer took %d ms", consumerElapsed));
+                for (int action = 0; action < processedByAction.length; ++action) {
+                    if (processedByAction[action] <= 0)
+                        continue;
+                    sb.append(String.format("\n     %dx %S @ %d ms", processedByAction[action], ACTION_STRINGS[action], elapsedByAction[action]));
+                }
+                log.warn(sb.toString());
+            }
         }
 
         Consumer.consumer_id.put(processId, new Integer[] { 0, 0 });

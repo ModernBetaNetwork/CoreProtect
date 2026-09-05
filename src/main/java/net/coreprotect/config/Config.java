@@ -95,6 +95,7 @@ public class Config extends Language {
     public boolean USE_ROLLBACKABLE_ENTITY_LIST;
     public Set<EntityType> ROLLBACKABLE_ENTITIES;
     /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+    public long CONSUMER_WARN_TIMEOUT_MS; // ModernBeta: Enhanced debugging
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -149,6 +150,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("use-rollbackable-entity-list", "false");
         DEFAULT_VALUES.put("rollbackable-entities", "");
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        DEFAULT_VALUES.put("consumer-warn-timeout-ms", "5000"); // ModernBeta: Enhanced debugging
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
@@ -196,6 +198,7 @@ public class Config extends Language {
         HEADERS.put("use-rollbackable-entity-list", new String[] { "# ModernBeta: If false, all entities will be rollbackable. If true, only those in the rollbackable-entities list will be rollbackable" });
         HEADERS.put("rollbackable-entities", new String[] { "# ModernBeta: List of entities that can be rollbacked" });
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+        HEADERS.put("consumer-warn-timeout-ms", new String[] { "# ModernBeta: Warn when consumer takes longer than N millis to complete" }); // ModernBeta: Enhanced debugging
     }
 
     private void readValues() {
@@ -268,6 +271,8 @@ public class Config extends Language {
             plugin.getLogger().info(String.format("All entities are rollbackable"));
         }
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
+
+        this.CONSUMER_WARN_TIMEOUT_MS = this.getLong("consumer-warn-timeout-ms", 5000);
     }
 
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
@@ -358,6 +363,22 @@ public class Config extends Language {
         configured = configured.replaceAll("[^0-9]", "");
 
         return configured.isEmpty() ? dfl : Integer.parseInt(configured);
+    }
+
+    private long getLong(final String key) {
+        return this.getLong(key, 0);
+    }
+
+    private long getLong(final String key, final long dfl) {
+        String configured = this.get(key, null);
+
+        if (configured == null) {
+            return dfl;
+        }
+
+        configured = configured.replaceAll("[^0-9]", "");
+
+        return configured.isEmpty() ? dfl : Long.parseLong(configured);
     }
 
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
