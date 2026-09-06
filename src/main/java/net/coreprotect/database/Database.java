@@ -1,11 +1,6 @@
 package net.coreprotect.database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -29,6 +25,7 @@ import net.coreprotect.utility.Color;
 import net.coreprotect.utility.ItemUtils;
 import net.coreprotect.utility.MaterialUtils;
 
+@Slf4j
 public class Database extends Queue {
 
     public static final int SIGN = 0;
@@ -223,14 +220,19 @@ public class Database extends Queue {
     public static void performUpdate(Statement statement, long id, int rb, int table) {
         try {
             int rolledBack = MaterialUtils.toggleRolledBack(rb, (table == 2 || table == 3 || table == 4)); // co_item, co_container, co_block
+            final String query;
             if (table == 1 || table == 3) {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "container SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
+                query = "UPDATE " + ConfigHandler.prefix + "container SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+            } else if (table == 2) {
+                query = "UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+            } else {
+                query ="UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
             }
-            else if (table == 2) {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
-            }
-            else {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
+
+            if ( Config.getGlobal().BATCH_DB_UPDATES ) {
+                statement.addBatch(query);
+            } else {
+                statement.executeUpdate(query);
             }
         }
         catch (Exception e) {
@@ -558,6 +560,20 @@ public class Database extends Queue {
     private static void createSQLiteIndex(Statement statement, List<String> indexData, String attachDatabase, String indexName, String indexColumns) throws SQLException {
         if (!indexData.contains(indexName)) {
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS " + attachDatabase + indexName + " ON " + indexColumns + ";");
+        }
+    }
+
+    public static void checkBatchUpdateSupport() {
+        try (Connection connection = Database.getConnection(true, true, true, 0)) {
+            if (connection != null) {
+                DatabaseMetaData metadata = connection.getMetaData();
+                if ( ! metadata.supportsBatchUpdates() && Config.getGlobal().BATCH_DB_UPDATES ) {
+                    log.warn("DB does not support batch updates, disabling batch-db-updates");
+                    Config.getGlobal().BATCH_DB_UPDATES = false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

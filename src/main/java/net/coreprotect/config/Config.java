@@ -96,6 +96,10 @@ public class Config extends Language {
     public Set<EntityType> ROLLBACKABLE_ENTITIES;
     /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
     public long CONSUMER_WARN_TIMEOUT_MS; // ModernBeta: Enhanced debugging
+    /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+    public boolean BATCH_DB_UPDATES;
+    public int MAX_DB_BATCH_SIZE;
+    /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -151,6 +155,10 @@ public class Config extends Language {
         DEFAULT_VALUES.put("rollbackable-entities", "");
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
         DEFAULT_VALUES.put("consumer-warn-timeout-ms", "5000"); // ModernBeta: Enhanced debugging
+        /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+        DEFAULT_VALUES.put("batch-db-updates", "false");
+        DEFAULT_VALUES.put("max-db-batch-size", "1000");
+        /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
@@ -199,6 +207,10 @@ public class Config extends Language {
         HEADERS.put("rollbackable-entities", new String[] { "# ModernBeta: List of entities that can be rollbacked" });
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
         HEADERS.put("consumer-warn-timeout-ms", new String[] { "# ModernBeta: Warn when consumer takes longer than N millis to complete" }); // ModernBeta: Enhanced debugging
+        /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+        HEADERS.put("batch-db-updates", new String[] { "# ModernBeta: Use batch INSERTS and UPDATES instead of individual SQL" });
+        HEADERS.put("max-db-batch-size", new String[] { "# ModernBeta: Maximum number of sql in a batch before commiting."});
+        /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
     }
 
     private void readValues() {
@@ -273,6 +285,11 @@ public class Config extends Language {
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
         this.CONSUMER_WARN_TIMEOUT_MS = this.getLong("consumer-warn-timeout-ms", 5000);
+
+        /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+        this.BATCH_DB_UPDATES = this.getBoolean("batch-db-updates", false);
+        this.MAX_DB_BATCH_SIZE = this.getInt("max-db-batch-size", 1000);
+        /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
     }
 
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
