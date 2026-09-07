@@ -2,6 +2,7 @@ package net.coreprotect.consumer.process;
 
 import java.sql.BatchUpdateException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,35 +19,37 @@ class RollbackUpdateProcess {
         Map<Integer, List<Object[]>> updateLists = Consumer.consumerObjectArrayList.get(processId);
         if (updateLists.get(id) != null) {
             List<Object[]> list = updateLists.get(id);
-            long batchSize = 0;
-            int batchStart = 0;
-            int totalProcessed = 0;
+            List<Object[]> batchData = new ArrayList<>(Config.getGlobal().MAX_DB_BATCH_SIZE);
+            int expectedUpdates = 0, actualUpdates = 0;
             for ( int i = 0; i < list.size(); ++i ) {
                 Object[] listRow = list.get(i);
                 long rowid = (Long) listRow[0];
                 int rolledBack = (Integer) listRow[9];
                 if (MaterialUtils.rolledBack(rolledBack, (table == 2 || table == 3 || table == 4)) == action) { // 1 = restore, 0 = rollback
                     Database.performUpdate(statement, rowid, rolledBack, table);
-                    if ( Config.getGlobal().BATCH_DB_UPDATES && ++batchSize > Config.getGlobal().MAX_DB_BATCH_SIZE ) {
-                        totalProcessed += executeBatch(statement, list, batchStart);
-                        batchSize = 0;
-                        batchStart = i+1;
+                    batchData.add(listRow);
+                    if ( Config.getGlobal().BATCH_DB_UPDATES && batchData.size() >= Config.getGlobal().MAX_DB_BATCH_SIZE ) {
+                        expectedUpdates += batchData.size();
+                        actualUpdates += executeBatch(statement, batchData);
+                        batchData.clear();
                     }
                 }
             }
 
             if ( Config.getGlobal().BATCH_DB_UPDATES ) {
-                if ( batchSize > 0 )
-                    totalProcessed += executeBatch(statement, list, batchStart);
-                if ( totalProcessed != list.size() )
-                    log.warn("BATCH MISMATCH. Unexpected number of updated records (expected: {}, actual: {})", list.size(), totalProcessed);
+                if ( ! batchData.isEmpty() ) {
+                    expectedUpdates += batchData.size();
+                    actualUpdates += executeBatch(statement, batchData);
+                }
+                if ( expectedUpdates != actualUpdates )
+                    log.warn("BATCH MISMATCH. Unexpected number of updated records (expected: {}, actual: {})", expectedUpdates, actualUpdates);
             }
 
             updateLists.remove(id);
         }
     }
 
-    private static int executeBatch(Statement statement, List<Object[]> data, int batchStart) {
+    private static int executeBatch(Statement statement, List<Object[]> batchData) {
         int [] counts;
         try {
             counts = statement.executeBatch();
@@ -66,11 +69,10 @@ class RollbackUpdateProcess {
             } else if ( count == Statement.SUCCESS_NO_INFO ) {
                 total += 1; // we are updating single records
             } else {
-                Object[] rowdata = data.get(batchStart+i);
                 if (count == Statement.EXECUTE_FAILED) {
-                    log.warn("BATCH ERROR (EXECUTE_FAILED): list[{}] = {}", batchStart+i, rowdata);
+                    log.warn("BATCH ERROR (EXECUTE_FAILED): batch[{}] = {}", i, batchData.get(i));
                 } else {
-                    log.warn("BATCH ERROR (UNKNOWN:{}): list[{}] = {}", count, batchStart+i, rowdata);
+                    log.warn("BATCH ERROR (UNKNOWN:{}): batch[{}] = {}", count, i, batchData.get(i));
                 }
             }
         }
