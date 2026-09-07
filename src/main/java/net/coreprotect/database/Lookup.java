@@ -25,20 +25,20 @@ public class Lookup extends Queue {
             }
             Consumer.isPaused = true;
 
-            ResultSet results = LookupRaw.rawLookupResultSet(statement, user, checkUuids, checkUsers, restrictList, excludeList, excludeUserList, actionList, location, radius, null, startTime, endTime, -1, -1, restrictWorld, lookup, true);
-            while (results.next()) {
-                int resultTable = results.getInt("tbl");
-                long count = results.getLong("count");
-                rowData[resultTable] = count;
-                rows += count;
+            try (ResultSet results = LookupRaw.rawLookupResultSet(statement, user, checkUuids, checkUsers, restrictList, excludeList, excludeUserList, actionList, location, radius, null, startTime, endTime, -1, -1, restrictWorld, lookup, true)) {
+                while (results.next()) {
+                    int resultTable = results.getInt("tbl");
+                    long count = results.getLong("count");
+                    rowData[resultTable] = count;
+                    rows += count;
+                }
+            } finally {
+                Consumer.isPaused = false;
             }
-            results.close();
         }
         catch (Exception e) {
             e.printStackTrace();
         }
-
-        Consumer.isPaused = false;
 
         return rows;
     }

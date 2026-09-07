@@ -39,19 +39,22 @@ public class ReloadCommand {
                         while (Consumer.isPaused) {
                             Thread.sleep(1);
                         }
+
                         Consumer.isPaused = true;
+                        try {
+                            ConfigHandler.performInitialization(false);
+                            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.RELOAD_SUCCESS));
 
-                        ConfigHandler.performInitialization(false);
-                        Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.RELOAD_SUCCESS));
-
-                        Thread networkHandler = new Thread(new NetworkHandler(false, false));
-                        networkHandler.start();
+                            Thread networkHandler = new Thread(new NetworkHandler(false, false));
+                            networkHandler.start();
+                        } finally {
+                            Consumer.isPaused = false;
+                        }
                     }
                     catch (Exception e) {
                         e.printStackTrace();
                     }
 
-                    Consumer.isPaused = false;
                     ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { false, System.currentTimeMillis() });
                 }
             }

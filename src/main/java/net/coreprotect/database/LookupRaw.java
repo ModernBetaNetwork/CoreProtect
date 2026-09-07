@@ -46,176 +46,176 @@ public class LookupRaw extends Queue {
             }
 
             Consumer.isPaused = true;
+            try (ResultSet results = rawLookupResultSet(statement, user, checkUuids, checkUsers, restrictList, excludeList, excludeUserList, actionList, location, radius, rowData, startTime, endTime, limitOffset, limitCount, restrictWorld, lookup, false)) {
 
-            ResultSet results = rawLookupResultSet(statement, user, checkUuids, checkUsers, restrictList, excludeList, excludeUserList, actionList, location, radius, rowData, startTime, endTime, limitOffset, limitCount, restrictWorld, lookup, false);
+                while (results.next()) {
+                    if (actionList.contains(6) || actionList.contains(7)) {
+                        long resultId = results.getLong("id");
+                        int resultTime = results.getInt("time");
+                        int resultUserId = results.getInt("user");
+                        String resultMessage = results.getString("message");
 
-            while (results.next()) {
-                if (actionList.contains(6) || actionList.contains(7)) {
-                    long resultId = results.getLong("id");
-                    int resultTime = results.getInt("time");
-                    int resultUserId = results.getInt("user");
-                    String resultMessage = results.getString("message");
-
-                    Object[] dataArray = new Object[] { resultId, resultTime, resultUserId, resultMessage };
-                    if (PluginChannelHandshakeListener.getInstance().isPluginChannelPlayer(user)) {
+                        Object[] dataArray = new Object[]{resultId, resultTime, resultUserId, resultMessage};
+                        if (PluginChannelHandshakeListener.getInstance().isPluginChannelPlayer(user)) {
+                            int resultWorldId = results.getInt("wid");
+                            int resultX = results.getInt("x");
+                            int resultY = results.getInt("y");
+                            int resultZ = results.getInt("z");
+                            dataArray = new Object[]{resultId, resultTime, resultUserId, resultMessage, resultWorldId, resultX, resultY, resultZ};
+                        }
+                        list.add(dataArray);
+                    }
+                    else if (actionList.contains(8)) {
+                        long resultId = results.getLong("id");
+                        int resultTime = results.getInt("time");
+                        int resultUserId = results.getInt("user");
                         int resultWorldId = results.getInt("wid");
                         int resultX = results.getInt("x");
                         int resultY = results.getInt("y");
                         int resultZ = results.getInt("z");
-                        dataArray = new Object[] { resultId, resultTime, resultUserId, resultMessage, resultWorldId, resultX, resultY, resultZ };
-                    }
-                    list.add(dataArray);
-                }
-                else if (actionList.contains(8)) {
-                    long resultId = results.getLong("id");
-                    int resultTime = results.getInt("time");
-                    int resultUserId = results.getInt("user");
-                    int resultWorldId = results.getInt("wid");
-                    int resultX = results.getInt("x");
-                    int resultY = results.getInt("y");
-                    int resultZ = results.getInt("z");
-                    int resultAction = results.getInt("action");
+                        int resultAction = results.getInt("action");
 
-                    Object[] dataArray = new Object[] { resultId, resultTime, resultUserId, resultWorldId, resultX, resultY, resultZ, resultAction };
-                    list.add(dataArray);
-                }
-                else if (actionList.contains(9)) {
-                    long resultId = results.getLong("id");
-                    int resultTime = results.getInt("time");
-                    String resultUuid = results.getString("uuid");
-                    String resultUser = results.getString("user");
+                        Object[] dataArray = new Object[]{resultId, resultTime, resultUserId, resultWorldId, resultX, resultY, resultZ, resultAction};
+                        list.add(dataArray);
+                    }
+                    else if (actionList.contains(9)) {
+                        long resultId = results.getLong("id");
+                        int resultTime = results.getInt("time");
+                        String resultUuid = results.getString("uuid");
+                        String resultUser = results.getString("user");
 
-                    Object[] dataArray = new Object[] { resultId, resultTime, resultUuid, resultUser };
-                    list.add(dataArray);
-                }
-                else if (actionList.contains(10)) {
-                    long resultId = results.getLong("id");
-                    int resultTime = results.getInt("time");
-                    int resultUserId = results.getInt("user");
-                    int resultWorldId = results.getInt("wid");
-                    int resultX = results.getInt("x");
-                    int resultY = results.getInt("y");
-                    int resultZ = results.getInt("z");
-                    boolean isFront = results.getInt("face") == 0;
-                    String line1 = results.getString("line_1");
-                    String line2 = results.getString("line_2");
-                    String line3 = results.getString("line_3");
-                    String line4 = results.getString("line_4");
-                    String line5 = results.getString("line_5");
-                    String line6 = results.getString("line_6");
-                    String line7 = results.getString("line_7");
-                    String line8 = results.getString("line_8");
+                        Object[] dataArray = new Object[]{resultId, resultTime, resultUuid, resultUser};
+                        list.add(dataArray);
+                    }
+                    else if (actionList.contains(10)) {
+                        long resultId = results.getLong("id");
+                        int resultTime = results.getInt("time");
+                        int resultUserId = results.getInt("user");
+                        int resultWorldId = results.getInt("wid");
+                        int resultX = results.getInt("x");
+                        int resultY = results.getInt("y");
+                        int resultZ = results.getInt("z");
+                        boolean isFront = results.getInt("face") == 0;
+                        String line1 = results.getString("line_1");
+                        String line2 = results.getString("line_2");
+                        String line3 = results.getString("line_3");
+                        String line4 = results.getString("line_4");
+                        String line5 = results.getString("line_5");
+                        String line6 = results.getString("line_6");
+                        String line7 = results.getString("line_7");
+                        String line8 = results.getString("line_8");
 
-                    StringBuilder message = new StringBuilder();
-                    if (isFront && line1 != null && line1.length() > 0) {
-                        message.append(line1);
-                        if (!line1.endsWith(" ")) {
-                            message.append(" ");
+                        StringBuilder message = new StringBuilder();
+                        if (isFront && line1 != null && line1.length() > 0) {
+                            message.append(line1);
+                            if (!line1.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (isFront && line2 != null && line2.length() > 0) {
-                        message.append(line2);
-                        if (!line2.endsWith(" ")) {
-                            message.append(" ");
+                        if (isFront && line2 != null && line2.length() > 0) {
+                            message.append(line2);
+                            if (!line2.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (isFront && line3 != null && line3.length() > 0) {
-                        message.append(line3);
-                        if (!line3.endsWith(" ")) {
-                            message.append(" ");
+                        if (isFront && line3 != null && line3.length() > 0) {
+                            message.append(line3);
+                            if (!line3.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (isFront && line4 != null && line4.length() > 0) {
-                        message.append(line4);
-                        if (!line4.endsWith(" ")) {
-                            message.append(" ");
+                        if (isFront && line4 != null && line4.length() > 0) {
+                            message.append(line4);
+                            if (!line4.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (!isFront && line5 != null && line5.length() > 0) {
-                        message.append(line5);
-                        if (!line5.endsWith(" ")) {
-                            message.append(" ");
+                        if (!isFront && line5 != null && line5.length() > 0) {
+                            message.append(line5);
+                            if (!line5.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (!isFront && line6 != null && line6.length() > 0) {
-                        message.append(line6);
-                        if (!line6.endsWith(" ")) {
-                            message.append(" ");
+                        if (!isFront && line6 != null && line6.length() > 0) {
+                            message.append(line6);
+                            if (!line6.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (!isFront && line7 != null && line7.length() > 0) {
-                        message.append(line7);
-                        if (!line7.endsWith(" ")) {
-                            message.append(" ");
+                        if (!isFront && line7 != null && line7.length() > 0) {
+                            message.append(line7);
+                            if (!line7.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
-                    if (!isFront && line8 != null && line8.length() > 0) {
-                        message.append(line8);
-                        if (!line8.endsWith(" ")) {
-                            message.append(" ");
+                        if (!isFront && line8 != null && line8.length() > 0) {
+                            message.append(line8);
+                            if (!line8.endsWith(" ")) {
+                                message.append(" ");
+                            }
                         }
-                    }
 
-                    Object[] dataArray = new Object[] { resultId, resultTime, resultUserId, resultWorldId, resultX, resultY, resultZ, message.toString() };
-                    list.add(dataArray);
-                }
-                else {
-                    int resultData = 0;
-                    int resultAmount = -1;
-                    int resultTable = 0;
-                    byte[] resultMeta = null;
-                    byte[] resultBlockData = null;
-                    long resultId = results.getLong("id");
-                    int resultUserId = results.getInt("user");
-                    int resultAction = results.getInt("action");
-                    int resultRolledBack = results.getInt("rolled_back");
-                    int resultType = results.getInt("type");
-                    int resultTime = results.getInt("time");
-                    int resultX = results.getInt("x");
-                    int resultY = results.getInt("y");
-                    int resultZ = results.getInt("z");
-                    int resultWorldId = results.getInt("wid");
-
-                    boolean hasTbl = false;
-                    if ((lookup && actionList.size() == 0) || actionList.contains(4) || actionList.contains(5) || actionList.contains(11)) {
-                        resultData = results.getInt("data");
-                        resultAmount = results.getInt("amount");
-                        resultMeta = results.getBytes("metadata");
-                        resultTable = results.getInt("tbl");
-                        hasTbl = true;
+                        Object[] dataArray = new Object[]{resultId, resultTime, resultUserId, resultWorldId, resultX, resultY, resultZ, message.toString()};
+                        list.add(dataArray);
                     }
                     else {
-                        resultData = results.getInt("data");
-                        resultMeta = results.getBytes("meta");
-                        resultBlockData = results.getBytes("blockdata");
-                    }
+                        int resultData = 0;
+                        int resultAmount = -1;
+                        int resultTable = 0;
+                        byte[] resultMeta = null;
+                        byte[] resultBlockData = null;
+                        long resultId = results.getLong("id");
+                        int resultUserId = results.getInt("user");
+                        int resultAction = results.getInt("action");
+                        int resultRolledBack = results.getInt("rolled_back");
+                        int resultType = results.getInt("type");
+                        int resultTime = results.getInt("time");
+                        int resultX = results.getInt("x");
+                        int resultY = results.getInt("y");
+                        int resultZ = results.getInt("z");
+                        int resultWorldId = results.getInt("wid");
 
-                    boolean valid = true;
-                    if (!lookup) {
-                        if (invalidRollbackActions.contains(resultAction)) {
-                            valid = false;
-                        }
-                    }
-
-                    if (valid) {
-                        if (hasTbl) {
-                            Object[] dataArray = new Object[] { resultId, resultTime, resultUserId, resultX, resultY, resultZ, resultType, resultData, resultAction, resultRolledBack, resultWorldId, resultAmount, resultMeta, resultBlockData, resultTable };
-                            list.add(dataArray);
+                        boolean hasTbl = false;
+                        if ((lookup && actionList.size() == 0) || actionList.contains(4) || actionList.contains(5) || actionList.contains(11)) {
+                            resultData = results.getInt("data");
+                            resultAmount = results.getInt("amount");
+                            resultMeta = results.getBytes("metadata");
+                            resultTable = results.getInt("tbl");
+                            hasTbl = true;
                         }
                         else {
-                            Object[] dataArray = new Object[] { resultId, resultTime, resultUserId, resultX, resultY, resultZ, resultType, resultData, resultAction, resultRolledBack, resultWorldId, resultAmount, resultMeta, resultBlockData };
-                            list.add(dataArray);
+                            resultData = results.getInt("data");
+                            resultMeta = results.getBytes("meta");
+                            resultBlockData = results.getBytes("blockdata");
+                        }
+
+                        boolean valid = true;
+                        if (!lookup) {
+                            if (invalidRollbackActions.contains(resultAction)) {
+                                valid = false;
+                            }
+                        }
+
+                        if (valid) {
+                            if (hasTbl) {
+                                Object[] dataArray = new Object[]{resultId, resultTime, resultUserId, resultX, resultY, resultZ, resultType, resultData, resultAction, resultRolledBack, resultWorldId, resultAmount, resultMeta, resultBlockData, resultTable};
+                                list.add(dataArray);
+                            }
+                            else {
+                                Object[] dataArray = new Object[]{resultId, resultTime, resultUserId, resultX, resultY, resultZ, resultType, resultData, resultAction, resultRolledBack, resultWorldId, resultAmount, resultMeta, resultBlockData};
+                                list.add(dataArray);
+                            }
                         }
                     }
                 }
+            } finally {
+                Consumer.isPaused = false;
             }
-            results.close();
         }
         catch (Exception e) {
             e.printStackTrace();
         }
 
-        Consumer.isPaused = false;
         return list;
     }
 
