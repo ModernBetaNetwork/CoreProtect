@@ -97,7 +97,19 @@ public class StatusCommand {
                             }
                         }
 
-                        Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_CONSUMER, Color.WHITE, String.format("%,d", consumerCount), (consumerCount == 1 ? Selector.FIRST : Selector.SECOND)));
+                        long millisBehind = System.currentTimeMillis() - Consumer.currentConsumerTimestamp;
+                        StringBuilder sb = new StringBuilder();
+                        if ( millisBehind > 60 * 1000 ) {
+                            sb.append(String.format("%02d:", millisBehind / 60 / 1000));
+                            millisBehind %= 60 * 1000;
+                        } else sb.append("00:");
+                        if ( millisBehind > 1000 ) {
+                            sb.append(String.format("%02d:", millisBehind / 1000));
+                            millisBehind %= 1000;
+                        } else sb.append("00.");
+                        sb.append(String.format("%03d", millisBehind));
+
+                        Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_CONSUMER, Color.WHITE, String.format("%,d", consumerCount), sb.toString(), (consumerCount == 1 ? Selector.FIRST : Selector.SECOND)));
                     }
                     catch (Exception e) {
                         e.printStackTrace();

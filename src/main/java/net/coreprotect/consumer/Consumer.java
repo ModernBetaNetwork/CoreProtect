@@ -23,6 +23,8 @@ public class Consumer extends Process implements Runnable, Thread.UncaughtExcept
     public static volatile boolean transacting = false;
     public static volatile boolean interrupt = false;
     protected static volatile boolean pausedSuccess = false;
+    public static volatile long nextConsumerTimestamp = System.currentTimeMillis();
+    public static volatile long currentConsumerTimestamp = nextConsumerTimestamp;
 
     public static ConcurrentHashMap<Integer, ArrayList<Object[]>> consumer = new ConcurrentHashMap<>(4, 0.75f, 2);
     // public static ConcurrentHashMap<Integer, Integer[]> consumer_id = new ConcurrentHashMap<>();
@@ -128,6 +130,8 @@ public class Consumer extends Process implements Runnable, Thread.UncaughtExcept
                     process_id = 1;
                     currentConsumer = 0;
                 }
+                currentConsumerTimestamp = nextConsumerTimestamp;
+                nextConsumerTimestamp = System.currentTimeMillis();
                 Thread.sleep(500);
                 pauseConsumer(process_id);
                 Process.processConsumer(process_id, lastRun);
