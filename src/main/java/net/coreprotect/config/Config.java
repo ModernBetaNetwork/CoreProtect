@@ -103,6 +103,7 @@ public class Config extends Language {
     public long METRICS_REPORTING_INTERVAL_MS;
     public long METRICS_LONG_RUNNING_WARNING_MS;
     /* END MODERNBETA: METRICS */
+    public boolean USE_DB_PARTITIONING; // ModernBeta: DB Partitioning
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -165,6 +166,7 @@ public class Config extends Language {
         DEFAULT_VALUES.put("metrics-reporting-interval-ms", "300000");
         DEFAULT_VALUES.put("metrics-long-running-warning-ms", "5000");
         /* END MODERNBETA: METRICS */
+        DEFAULT_VALUES.put("use-db-partitioning", "false"); // ModernBeta: DB Partitioning
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
@@ -220,6 +222,7 @@ public class Config extends Language {
         HEADERS.put("metrics-reporting-interval-ms", new String[] { "# ModernBeta: Interval at which to report metrics" });
         HEADERS.put("metrics-long-running-warning-ms", new String[] { "# ModernBeta: Threshold in millis to warn of a long running process" });
         /* END MODERNBETA: METRICS */
+        HEADERS.put("use-db-partitioning", new String[] { "# ModernBeta: Whether DB partitioning is used or not" }); // ModernBeta: DB Partitioning
     }
 
     private void readValues() {
@@ -302,6 +305,8 @@ public class Config extends Language {
         this.METRICS_REPORTING_INTERVAL_MS = this.getLong("metrics-reporting-interval-ms", 300000);
         this.METRICS_LONG_RUNNING_WARNING_MS = this.getLong("metrics-long-running-warning-ms", 5000);
         /* END MODERNBETA: METRICS */
+
+        this.USE_DB_PARTITIONING = this.getBoolean("use-db-partitioning", false);
     }
 
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */

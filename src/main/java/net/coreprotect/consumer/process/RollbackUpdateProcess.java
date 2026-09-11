@@ -24,9 +24,10 @@ class RollbackUpdateProcess {
             for ( int i = 0; i < list.size(); ++i ) {
                 Object[] listRow = list.get(i);
                 long rowid = (Long) listRow[0];
+                int time = (int) listRow[1]; // only used for partitioned tables
                 int rolledBack = (Integer) listRow[9];
                 if (MaterialUtils.rolledBack(rolledBack, (table == 2 || table == 3 || table == 4)) == action) { // 1 = restore, 0 = rollback
-                    Database.performUpdate(statement, rowid, rolledBack, table);
+                    Database.performUpdate(statement, rowid, time, rolledBack, table);
                     batchData.add(listRow);
                     if ( Config.getGlobal().BATCH_DB_UPDATES && batchData.size() >= Config.getGlobal().MAX_DB_BATCH_SIZE ) {
                         expectedUpdates += batchData.size();

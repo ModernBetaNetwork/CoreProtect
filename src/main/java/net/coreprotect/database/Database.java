@@ -221,16 +221,24 @@ public class Database extends Queue {
         }
     }
 
-    public static void performUpdate(Statement statement, long id, int rb, int table) {
+    public static void performUpdate(Statement statement, long id, long time, int rb, int table) {
         try {
             int rolledBack = MaterialUtils.toggleRolledBack(rb, (table == 2 || table == 3 || table == 4)); // co_item, co_container, co_block
             final String query;
             if (table == 1 || table == 3) {
                 query = "UPDATE " + ConfigHandler.prefix + "container SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
             } else if (table == 2) {
-                query = "UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+                if ( Config.getGlobal().USE_DB_PARTITIONING ) {
+                    query = "UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "' AND time='" + time + "'";
+                } else {
+                    query = "UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+                }
             } else {
-                query ="UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+                if ( Config.getGlobal().USE_DB_PARTITIONING ) {
+                    query = "UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "' AND time='" + time + "'";
+                } else {
+                    query ="UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'";
+                }
             }
 
             if ( Config.getGlobal().BATCH_DB_UPDATES ) {
