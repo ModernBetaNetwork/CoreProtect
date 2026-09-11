@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -19,6 +20,7 @@ public class SignInspector extends BaseInspector {
                 try {
                     checkPreconditions(player);
 
+                    long startNanos = System.nanoTime();
                     try (Connection connection = getDatabaseConnection(player)) {
                         Statement statement = connection.createStatement();
                         List<String> signData = SignMessageLookup.performLookup(null, statement, location, player, 1, 7);
@@ -37,6 +39,8 @@ public class SignInspector extends BaseInspector {
                         }
 
                         statement.close();
+                    } finally {
+                        Instrumentation.end("SignInspector$BasicThread.run", startNanos);
                     }
                 }
                 catch (InspectionException e) {

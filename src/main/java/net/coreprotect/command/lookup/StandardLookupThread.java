@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -91,6 +92,7 @@ public class StandardLookupThread implements Runnable {
 
     @Override
     public void run() {
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(true)) {
             ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { true, System.currentTimeMillis() });
 
@@ -463,6 +465,8 @@ public class StandardLookupThread implements Runnable {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("StandardLookupThread.run", startNanos);
         }
 
         ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { false, System.currentTimeMillis() });

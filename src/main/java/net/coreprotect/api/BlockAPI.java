@@ -6,6 +6,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.block.Block;
 
 import net.coreprotect.config.Config;
@@ -49,6 +50,7 @@ public class BlockAPI {
             return result;
         }
 
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(false, 1000)) {
             if (connection == null) {
                 return result;
@@ -94,6 +96,8 @@ public class BlockAPI {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("BlockAPI.performLookup", startNanos);
         }
 
         return result;

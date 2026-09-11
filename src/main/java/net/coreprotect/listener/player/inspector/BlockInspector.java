@@ -3,6 +3,7 @@ package net.coreprotect.listener.player.inspector;
 import java.sql.Connection;
 import java.sql.Statement;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.GameMode;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -20,6 +21,7 @@ public class BlockInspector extends BaseInspector {
                 try {
                     checkPreconditions(player);
 
+                    long startNanos = System.nanoTime();
                     try (Connection connection = getDatabaseConnection(player)) {
                         Statement statement = connection.createStatement();
 
@@ -40,6 +42,8 @@ public class BlockInspector extends BaseInspector {
                             Sign sign = (Sign) blockState;
                             player.sendSignChange(sign.getLocation(), sign.getLines(), sign.getColor());
                         }
+                    } finally {
+                        Instrumentation.end("BlockInspector$BasicThread.run", startNanos);
                     }
                 }
                 catch (InspectionException e) {

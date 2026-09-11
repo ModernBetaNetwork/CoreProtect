@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -32,6 +33,7 @@ public class ChestTransactionLookupThread implements Runnable {
 
     @Override
     public void run() {
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(true)) {
             ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { true, System.currentTimeMillis() });
             if (connection != null) {
@@ -48,6 +50,8 @@ public class ChestTransactionLookupThread implements Runnable {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("ChestTransactionLookupThread.run", startNanos);
         }
 
         ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { false, System.currentTimeMillis() });

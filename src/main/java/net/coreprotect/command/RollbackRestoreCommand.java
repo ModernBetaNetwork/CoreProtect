@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -346,6 +347,7 @@ public class RollbackRestoreCommand {
                         class BasicThread2 implements Runnable {
                             @Override
                             public void run() {
+                                long startNanos = System.nanoTime();
                                 try (Connection connection = Database.getConnection(false, 1000)) {
                                     ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { true, System.currentTimeMillis() });
                                     int action = finalAction;
@@ -450,6 +452,8 @@ public class RollbackRestoreCommand {
                                 }
                                 catch (Exception e) {
                                     e.printStackTrace();
+                                } finally {
+                                    Instrumentation.end("RollbackRestoreCommand$BasicThread2.run", startNanos);
                                 }
                                 if (ConfigHandler.activeRollbacks.get(player2.getName()) != null) {
                                     ConfigHandler.activeRollbacks.remove(player2.getName());

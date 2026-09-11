@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -162,6 +163,7 @@ public class Database extends Queue {
 
     public static Connection getConnection(boolean force, boolean startup, boolean onlyCheckTransacting, int waitTime) {
         Connection connection = null;
+        long startNanos = System.nanoTime();
         try {
             if (!force && (ConfigHandler.converterRunning || ConfigHandler.purgeRunning)) {
                 return connection;
@@ -200,6 +202,8 @@ public class Database extends Queue {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("Database.getConnection", startNanos);
         }
 
         return connection;

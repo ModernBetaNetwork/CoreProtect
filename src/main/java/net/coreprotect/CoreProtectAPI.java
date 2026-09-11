@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.coreprotect.config.ConfigHandler;
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -783,6 +784,7 @@ public class CoreProtectAPI extends Queue {
             return null;
         }
 
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(false, 1000)) {
             if (connection != null) {
                 Statement statement = connection.createStatement();
@@ -832,6 +834,8 @@ public class CoreProtectAPI extends Queue {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("CoreProtectAPI.processData", startNanos);
         }
 
         return result;

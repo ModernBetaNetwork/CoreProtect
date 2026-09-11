@@ -5,6 +5,7 @@ import java.sql.Statement;
 import java.util.List;
 
 import net.coreprotect.database.lookup.DoubleChestTransactionLookup;
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -20,6 +21,7 @@ public class ContainerInspector extends BaseInspector {
                 try {
                     checkPreconditions(player);
 
+                    long startNanos = System.nanoTime();
                     try (Connection connection = getDatabaseConnection(player)) {
                         Statement statement = connection.createStatement();
                         List<String> blockData;
@@ -33,6 +35,8 @@ public class ContainerInspector extends BaseInspector {
                         }
 
                         statement.close();
+                    } finally {
+                        Instrumentation.end("ContainerInspector$BasicThread.run", startNanos);
                     }
                 }
                 catch (InspectionException e) {

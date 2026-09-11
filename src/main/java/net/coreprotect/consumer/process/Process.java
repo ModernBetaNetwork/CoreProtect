@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import lombok.extern.slf4j.Slf4j;
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Material;
 
 import net.coreprotect.config.Config;
@@ -103,9 +104,6 @@ public class Process {
     }
 
     protected static void processConsumer(int processId, boolean lastRun) {
-        final long consumerStart = System.currentTimeMillis();
-        int[] processedByAction = new int[30];
-        long[] elapsedByAction = new long[30];
         try (Connection connection = Database.getConnection(false, 500)) {
             if (connection == null) {
                 return;
@@ -177,95 +175,97 @@ public class Process {
                             Object object = consumerObject.get(id);
 
                             try {
-                                long start = System.currentTimeMillis();
-                                switch (action) {
-                                    case Process.BLOCK_BREAK:
-                                        BlockBreakProcess.process(preparedStmtBlocks, preparedStmtSkulls, i, processId, id, blockType, blockData, replaceType, forceData, user, object, (String) data[7]);
-                                        break;
-                                    case Process.BLOCK_PLACE:
-                                        BlockPlaceProcess.process(preparedStmtBlocks, preparedStmtSkulls, i, blockType, blockData, replaceType, replaceData, forceData, user, object, (String) data[7], (String) data[8]);
-                                        break;
-                                    case Process.SIGN_TEXT:
-                                        SignTextProcess.process(preparedStmtSigns, i, processId, id, forceData, user, object, replaceData, blockData);
-                                        break;
-                                    case Process.CONTAINER_BREAK:
-                                        ContainerBreakProcess.process(preparedStmtContainers, i, processId, id, blockType, user, object);
-                                        break;
-                                    case Process.PLAYER_INTERACTION:
-                                        PlayerInteractionProcess.process(preparedStmtBlocks, i, user, object, blockType);
-                                        break;
-                                    case Process.CONTAINER_TRANSACTION:
-                                        ContainerTransactionProcess.process(preparedStmtContainers, preparedStmtItems, i, processId, id, blockType, forceData, user, object);
-                                        break;
-                                    case Process.ITEM_TRANSACTION:
-                                        ItemTransactionProcess.process(preparedStmtItems, i, processId, id, forceData, replaceData, blockData, user, object);
-                                        break;
-                                    case Process.STRUCTURE_GROWTH:
-                                        StructureGrowthProcess.process(statement, preparedStmtBlocks, i, processId, id, user, object, forceData);
-                                        break;
-                                    case Process.ROLLBACK_UPDATE:
-                                        RollbackUpdateProcess.process(statement, processId, id, forceData, 0);
-                                        break;
-                                    case Process.CONTAINER_ROLLBACK_UPDATE:
-                                        RollbackUpdateProcess.process(statement, processId, id, forceData, 1);
-                                        break;
-                                    case Process.INVENTORY_ROLLBACK_UPDATE:
-                                        RollbackUpdateProcess.process(statement, processId, id, forceData, 2);
-                                        break;
-                                    case Process.INVENTORY_CONTAINER_ROLLBACK_UPDATE:
-                                        RollbackUpdateProcess.process(statement, processId, id, forceData, 3);
-                                        break;
-                                    case Process.BLOCK_INVENTORY_ROLLBACK_UPDATE:
-                                        RollbackUpdateProcess.process(statement, processId, id, forceData, 4);
-                                        break;
-                                    case Process.WORLD_INSERT:
-                                        WorldInsertProcess.process(preparedStmtWorlds, i, statement, object, forceData);
-                                        break;
-                                    case Process.SIGN_UPDATE:
-                                        SignUpdateProcess.process(statement, object, user, blockData, forceData);
-                                        break;
-                                    case Process.SKULL_UPDATE:
-                                        SkullUpdateProcess.process(statement, object, forceData);
-                                        break;
-                                    case Process.PLAYER_CHAT:
-                                        PlayerChatProcess.process(preparedStmtChat, i, processId, id, object, user);
-                                        break;
-                                    case Process.PLAYER_COMMAND:
-                                        PlayerCommandProcess.process(preparedStmtCommand, i, processId, id, object, user);
-                                        break;
-                                    case Process.PLAYER_LOGIN:
-                                        PlayerLoginProcess.process(connection, preparedStmtSession, i, processId, id, object, blockData, replaceData, forceData, user);
-                                        break;
-                                    case Process.PLAYER_LOGOUT:
-                                        PlayerLogoutProcess.process(preparedStmtSession, i, object, forceData, user);
-                                        break;
-                                    case Process.ENTITY_KILL:
-                                        EntityKillProcess.process(preparedStmtBlocks, preparedStmtEntities, i, processId, id, object, user);
-                                        break;
-                                    case Process.ENTITY_SPAWN:
-                                        EntitySpawnProcess.process(statement, object, forceData);
-                                        break;
-                                    case Process.NATURAL_BLOCK_BREAK:
-                                        NaturalBlockBreakProcess.process(statement, preparedStmtBlocks, i, processId, id, user, object, blockType, blockData, (String) data[7]);
-                                        break;
-                                    case Process.MATERIAL_INSERT:
-                                        MaterialInsertProcess.process(preparedStmtMaterials, statement, i, object, forceData);
-                                        break;
-                                    case Process.ART_INSERT:
-                                        ArtInsertProcess.process(preparedStmtArt, statement, i, object, forceData);
-                                        break;
-                                    case Process.ENTITY_INSERT:
-                                        EntityInsertProcess.process(preparedStmtEntity, statement, i, object, forceData);
-                                        break;
-                                    case Process.PLAYER_KILL:
-                                        PlayerKillProcess.process(preparedStmtBlocks, i, id, object, user);
-                                        break;
-                                    case Process.BLOCKDATA_INSERT:
-                                        BlockDataInsertProcess.process(preparedStmtBlockdata, statement, i, object, forceData);
-                                        break;
+                                long startNanos = System.nanoTime();
+                                try {
+                                    switch (action) {
+                                        case Process.BLOCK_BREAK:
+                                            BlockBreakProcess.process(preparedStmtBlocks, preparedStmtSkulls, i, processId, id, blockType, blockData, replaceType, forceData, user, object, (String) data[7]);
+                                            break;
+                                        case Process.BLOCK_PLACE:
+                                            BlockPlaceProcess.process(preparedStmtBlocks, preparedStmtSkulls, i, blockType, blockData, replaceType, replaceData, forceData, user, object, (String) data[7], (String) data[8]);
+                                            break;
+                                        case Process.SIGN_TEXT:
+                                            SignTextProcess.process(preparedStmtSigns, i, processId, id, forceData, user, object, replaceData, blockData);
+                                            break;
+                                        case Process.CONTAINER_BREAK:
+                                            ContainerBreakProcess.process(preparedStmtContainers, i, processId, id, blockType, user, object);
+                                            break;
+                                        case Process.PLAYER_INTERACTION:
+                                            PlayerInteractionProcess.process(preparedStmtBlocks, i, user, object, blockType);
+                                            break;
+                                        case Process.CONTAINER_TRANSACTION:
+                                            ContainerTransactionProcess.process(preparedStmtContainers, preparedStmtItems, i, processId, id, blockType, forceData, user, object);
+                                            break;
+                                        case Process.ITEM_TRANSACTION:
+                                            ItemTransactionProcess.process(preparedStmtItems, i, processId, id, forceData, replaceData, blockData, user, object);
+                                            break;
+                                        case Process.STRUCTURE_GROWTH:
+                                            StructureGrowthProcess.process(statement, preparedStmtBlocks, i, processId, id, user, object, forceData);
+                                            break;
+                                        case Process.ROLLBACK_UPDATE:
+                                            RollbackUpdateProcess.process(statement, processId, id, forceData, 0);
+                                            break;
+                                        case Process.CONTAINER_ROLLBACK_UPDATE:
+                                            RollbackUpdateProcess.process(statement, processId, id, forceData, 1);
+                                            break;
+                                        case Process.INVENTORY_ROLLBACK_UPDATE:
+                                            RollbackUpdateProcess.process(statement, processId, id, forceData, 2);
+                                            break;
+                                        case Process.INVENTORY_CONTAINER_ROLLBACK_UPDATE:
+                                            RollbackUpdateProcess.process(statement, processId, id, forceData, 3);
+                                            break;
+                                        case Process.BLOCK_INVENTORY_ROLLBACK_UPDATE:
+                                            RollbackUpdateProcess.process(statement, processId, id, forceData, 4);
+                                            break;
+                                        case Process.WORLD_INSERT:
+                                            WorldInsertProcess.process(preparedStmtWorlds, i, statement, object, forceData);
+                                            break;
+                                        case Process.SIGN_UPDATE:
+                                            SignUpdateProcess.process(statement, object, user, blockData, forceData);
+                                            break;
+                                        case Process.SKULL_UPDATE:
+                                            SkullUpdateProcess.process(statement, object, forceData);
+                                            break;
+                                        case Process.PLAYER_CHAT:
+                                            PlayerChatProcess.process(preparedStmtChat, i, processId, id, object, user);
+                                            break;
+                                        case Process.PLAYER_COMMAND:
+                                            PlayerCommandProcess.process(preparedStmtCommand, i, processId, id, object, user);
+                                            break;
+                                        case Process.PLAYER_LOGIN:
+                                            PlayerLoginProcess.process(connection, preparedStmtSession, i, processId, id, object, blockData, replaceData, forceData, user);
+                                            break;
+                                        case Process.PLAYER_LOGOUT:
+                                            PlayerLogoutProcess.process(preparedStmtSession, i, object, forceData, user);
+                                            break;
+                                        case Process.ENTITY_KILL:
+                                            EntityKillProcess.process(preparedStmtBlocks, preparedStmtEntities, i, processId, id, object, user);
+                                            break;
+                                        case Process.ENTITY_SPAWN:
+                                            EntitySpawnProcess.process(statement, object, forceData);
+                                            break;
+                                        case Process.NATURAL_BLOCK_BREAK:
+                                            NaturalBlockBreakProcess.process(statement, preparedStmtBlocks, i, processId, id, user, object, blockType, blockData, (String) data[7]);
+                                            break;
+                                        case Process.MATERIAL_INSERT:
+                                            MaterialInsertProcess.process(preparedStmtMaterials, statement, i, object, forceData);
+                                            break;
+                                        case Process.ART_INSERT:
+                                            ArtInsertProcess.process(preparedStmtArt, statement, i, object, forceData);
+                                            break;
+                                        case Process.ENTITY_INSERT:
+                                            EntityInsertProcess.process(preparedStmtEntity, statement, i, object, forceData);
+                                            break;
+                                        case Process.PLAYER_KILL:
+                                            PlayerKillProcess.process(preparedStmtBlocks, i, id, object, user);
+                                            break;
+                                        case Process.BLOCKDATA_INSERT:
+                                            BlockDataInsertProcess.process(preparedStmtBlockdata, statement, i, object, forceData);
+                                            break;
+                                    }
+                                } finally {
+                                    Instrumentation.end(ACTION_STRINGS[action], startNanos);
                                 }
-                                elapsedByAction[action] += System.currentTimeMillis() - start;
-                                processedByAction[action]++;
 
                                 // If database connection goes missing, remove processed data from consumer and abort
                                 if (statement.isClosed()) {
@@ -322,18 +322,6 @@ public class Process {
         }
         catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            long consumerElapsed = System.currentTimeMillis() - consumerStart;
-            if (consumerElapsed > Config.getGlobal().CONSUMER_WARN_TIMEOUT_MS) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("[CoreProtect] WARNING: Consumer took %d ms", consumerElapsed));
-                for (int action = 0; action < processedByAction.length; ++action) {
-                    if (processedByAction[action] <= 0)
-                        continue;
-                    sb.append(String.format("\n     %dx %S @ %d ms", processedByAction[action], ACTION_STRINGS[action], elapsedByAction[action]));
-                }
-                log.warn(sb.toString());
-            }
         }
     }
 

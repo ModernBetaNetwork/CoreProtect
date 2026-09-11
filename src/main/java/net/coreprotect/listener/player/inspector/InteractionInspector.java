@@ -3,6 +3,7 @@ package net.coreprotect.listener.player.inspector;
 import java.sql.Connection;
 import java.sql.Statement;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -18,6 +19,7 @@ public class InteractionInspector extends BaseInspector {
                 try {
                     checkPreconditions(player);
 
+                    long startNanos = System.nanoTime();
                     try (Connection connection = getDatabaseConnection(player)) {
                         Statement statement = connection.createStatement();
                         String blockData = InteractionLookup.performLookup(null, statement, finalInteractBlock, player, 0, 1, 7);
@@ -32,6 +34,8 @@ public class InteractionInspector extends BaseInspector {
                         }
 
                         statement.close();
+                    } finally {
+                        Instrumentation.end("InteractionInspector$BasicThread.run", startNanos);
                     }
                 }
                 catch (InspectionException e) {

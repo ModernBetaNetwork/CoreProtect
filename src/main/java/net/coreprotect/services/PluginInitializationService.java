@@ -2,6 +2,7 @@ package net.coreprotect.services;
 
 import java.io.File;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -76,6 +77,9 @@ public class PluginInitializationService {
 
             // Start metrics
             enableMetrics(plugin);
+
+            // Start Instrumentation reporting
+            Instrumentation.initialize();
         }
 
         return start;

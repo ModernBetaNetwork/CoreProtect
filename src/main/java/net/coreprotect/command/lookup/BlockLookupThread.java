@@ -3,6 +3,7 @@ package net.coreprotect.command.lookup;
 import java.sql.Connection;
 import java.sql.Statement;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
@@ -38,6 +39,7 @@ public class BlockLookupThread implements Runnable {
 
     @Override
     public void run() {
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(true)) {
             ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { true, System.currentTimeMillis() });
             if (connection != null) {
@@ -83,6 +85,8 @@ public class BlockLookupThread implements Runnable {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("BlockLookupThread.run", startNanos);
         }
 
         ConfigHandler.lookupThrottle.put(player.getName(), new Object[] { false, System.currentTimeMillis() });

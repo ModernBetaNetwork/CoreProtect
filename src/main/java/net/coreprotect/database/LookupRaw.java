@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -41,8 +42,13 @@ public class LookupRaw extends Queue {
         }
 
         try {
-            while (Consumer.isPaused) {
-                Thread.sleep(1);
+            long startNanos = System.nanoTime();
+            try {
+                while (Consumer.isPaused) {
+                    Thread.sleep(1);
+                }
+            } finally {
+                Instrumentation.end("WAIT Consumer.isPaused", startNanos);
             }
 
             Consumer.isPaused = true;

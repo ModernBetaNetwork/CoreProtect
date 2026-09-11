@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -152,17 +153,22 @@ public class ContainerRollback extends Rollback {
             }, location, 0);
 
             ConfigHandler.RollbackContext rollbackContext = ConfigHandler.userRollbackContextMap.get(finalUserString);
-            int next = rollbackContext.getNext();
-            int sleepTime = 0;
+            long startNanos = System.nanoTime();
+            try {
+                int next = rollbackContext.getNext();
+                int sleepTime = 0;
 
-            while (next == 0) {
-                sleepTime = sleepTime + 5;
-                Thread.sleep(5);
-                next = rollbackContext.getNext();
-                if (sleepTime > 300000) {
-                    Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
-                    break;
+                while (next == 0) {
+                    sleepTime = sleepTime + 5;
+                    Thread.sleep(5);
+                    next = rollbackContext.getNext();
+                    if (sleepTime > 300000) {
+                        Chat.console(Phrase.build(Phrase.ROLLBACK_ABORTED));
+                        break;
+                    }
                 }
+            } finally {
+                Instrumentation.end("ContainerRollback.performContainerRollbackRestore", startNanos);
             }
 
             int blockCount = rollbackContext.getBlockCount();

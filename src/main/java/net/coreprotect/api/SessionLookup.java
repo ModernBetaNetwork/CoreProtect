@@ -11,6 +11,7 @@ import net.coreprotect.config.Config;
 import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.statement.UserStatement;
+import net.coreprotect.metrics.Instrumentation;
 
 /**
  * Provides API methods for looking up player session data in the CoreProtect database.
@@ -52,6 +53,7 @@ public class SessionLookup {
             return result;
         }
 
+        long startNanos = System.nanoTime();
         try (Connection connection = Database.getConnection(false, 1000)) {
             if (connection == null) {
                 return result;
@@ -79,6 +81,8 @@ public class SessionLookup {
         }
         catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Instrumentation.end("SessionLookup.performLookup", startNanos);
         }
 
         return result;

@@ -1,5 +1,6 @@
 package net.coreprotect.command;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.command.CommandSender;
 
 import net.coreprotect.config.ConfigHandler;
@@ -36,14 +37,22 @@ public class ReloadCommand {
                         if (Consumer.isPaused) {
                             Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.RELOAD_STARTED));
                         }
-                        while (Consumer.isPaused) {
-                            Thread.sleep(1);
+                        long startNanos = System.nanoTime();
+                        try {
+                            while (Consumer.isPaused) {
+                                Thread.sleep(1);
+                            }
+                        } finally {
+                            Instrumentation.end("WAIT Consumer.isPaused", startNanos);
                         }
 
                         Consumer.isPaused = true;
                         try {
                             ConfigHandler.performInitialization(false);
                             Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.RELOAD_SUCCESS));
+
+                            Instrumentation.shutdown();
+                            Instrumentation.initialize();
 
                             Thread networkHandler = new Thread(new NetworkHandler(false, false));
                             networkHandler.start();

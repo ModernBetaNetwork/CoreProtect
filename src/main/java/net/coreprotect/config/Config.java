@@ -95,11 +95,14 @@ public class Config extends Language {
     public boolean USE_ROLLBACKABLE_ENTITY_LIST;
     public Set<EntityType> ROLLBACKABLE_ENTITIES;
     /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-    public long CONSUMER_WARN_TIMEOUT_MS; // ModernBeta: Enhanced debugging
     /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
     public boolean BATCH_DB_UPDATES;
     public int MAX_DB_BATCH_SIZE;
     /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+    /* START MODERNBETA: METRICS */
+    public long METRICS_REPORTING_INTERVAL_MS;
+    public long METRICS_LONG_RUNNING_WARNING_MS;
+    /* END MODERNBETA: METRICS */
 
     static {
         DEFAULT_VALUES.put("donation-key", "");
@@ -154,11 +157,14 @@ public class Config extends Language {
         DEFAULT_VALUES.put("use-rollbackable-entity-list", "false");
         DEFAULT_VALUES.put("rollbackable-entities", "");
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-        DEFAULT_VALUES.put("consumer-warn-timeout-ms", "5000"); // ModernBeta: Enhanced debugging
         /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
         DEFAULT_VALUES.put("batch-db-updates", "false");
         DEFAULT_VALUES.put("max-db-batch-size", "1000");
         /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+        /* START MODERNBETA: METRICS */
+        DEFAULT_VALUES.put("metrics-reporting-interval-ms", "300000");
+        DEFAULT_VALUES.put("metrics-long-running-warning-ms", "5000");
+        /* END MODERNBETA: METRICS */
 
         HEADERS.put("donation-key", new String[] { "# CoreProtect is donationware. Obtain a donation key from coreprotect.net/donate/" });
         HEADERS.put("use-mysql", new String[] { "# MySQL is optional and not required.", "# If you prefer to use MySQL, enable the following and fill out the fields." });
@@ -206,11 +212,14 @@ public class Config extends Language {
         HEADERS.put("use-rollbackable-entity-list", new String[] { "# ModernBeta: If false, all entities will be rollbackable. If true, only those in the rollbackable-entities list will be rollbackable" });
         HEADERS.put("rollbackable-entities", new String[] { "# ModernBeta: List of entities that can be rollbacked" });
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
-        HEADERS.put("consumer-warn-timeout-ms", new String[] { "# ModernBeta: Warn when consumer takes longer than N millis to complete" }); // ModernBeta: Enhanced debugging
         /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
         HEADERS.put("batch-db-updates", new String[] { "# ModernBeta: Use batch INSERTS and UPDATES instead of individual SQL" });
         HEADERS.put("max-db-batch-size", new String[] { "# ModernBeta: Maximum number of sql in a batch before commiting."});
         /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+        /* START MODERNBETA: METRICS */
+        HEADERS.put("metrics-reporting-interval-ms", new String[] { "# ModernBeta: Interval at which to report metrics" });
+        HEADERS.put("metrics-long-running-warning-ms", new String[] { "# ModernBeta: Threshold in millis to warn of a long running process" });
+        /* END MODERNBETA: METRICS */
     }
 
     private void readValues() {
@@ -284,12 +293,15 @@ public class Config extends Language {
         }
         /* END MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */
 
-        this.CONSUMER_WARN_TIMEOUT_MS = this.getLong("consumer-warn-timeout-ms", 5000);
-
         /* START MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
         this.BATCH_DB_UPDATES = this.getBoolean("batch-db-updates", false);
         this.MAX_DB_BATCH_SIZE = this.getInt("max-db-batch-size", 1000);
         /* END MODERNBETA: BATCH DB UPDATES FOR ROLLBACKS */
+
+        /* START MODERNBETA: METRICS */
+        this.METRICS_REPORTING_INTERVAL_MS = this.getLong("metrics-reporting-interval-ms", 300000);
+        this.METRICS_LONG_RUNNING_WARNING_MS = this.getLong("metrics-long-running-warning-ms", 5000);
+        /* END MODERNBETA: METRICS */
     }
 
     /* START MODERNBETA: NON-ROLLBACKABLE ENTITY DEATHS */

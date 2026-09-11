@@ -3,6 +3,7 @@ package net.coreprotect.services;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -68,6 +69,10 @@ public class ShutdownService {
             waitForPendingOperations(shutdownTime, nextAlertTime);
 
             ConfigHandler.performDisable();
+
+            // Disable Instrumentation reporting
+            Instrumentation.shutdown();
+
             Chat.console(Phrase.build(Phrase.DISABLE_SUCCESS, "CoreProtect v" + plugin.getDescription().getVersion()));
         }
         catch (Exception e) {

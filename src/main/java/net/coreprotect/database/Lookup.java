@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -20,8 +21,13 @@ public class Lookup extends Queue {
         Long rows = 0L;
 
         try {
-            while (Consumer.isPaused) {
-                Thread.sleep(1);
+            long startNanos = System.nanoTime();
+            try {
+                while (Consumer.isPaused) {
+                    Thread.sleep(1);
+                }
+            } finally {
+                Instrumentation.end("WAIT Consumer.isPaused", startNanos);
             }
             Consumer.isPaused = true;
 

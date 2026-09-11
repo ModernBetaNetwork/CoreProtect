@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.coreprotect.metrics.Instrumentation;
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockState;
 import org.bukkit.inventory.ItemStack;
@@ -134,7 +135,12 @@ public class Consumer extends Process implements Runnable, Thread.UncaughtExcept
                 nextConsumerTimestamp = System.currentTimeMillis();
                 Thread.sleep(500);
                 pauseConsumer(process_id);
-                Process.processConsumer(process_id, lastRun);
+                long startNanos = System.nanoTime();
+                try {
+                    Process.processConsumer(process_id, lastRun);
+                } finally {
+                    Instrumentation.end("Process.processConsumer", startNanos);
+                }
             }
             catch (Exception e) {
                 e.printStackTrace();
